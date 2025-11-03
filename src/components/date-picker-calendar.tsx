@@ -61,13 +61,13 @@ export default function DatePickerCalendar({ selectedDate, onDateChange }: DateP
     <div className="bg-card rounded-2xl p-6 border border-border">
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <input
+          {/* <input
             type="text"
             placeholder="MM/DD/YYYY"
             className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
             value={selectedDate.toLocaleDateString("en-US")}
             readOnly
-          />
+          /> */}
           <button className="p-2 hover:bg-sidebar-accent rounded-lg transition-colors">📅</button>
         </div>
 
