@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Sidebar from "@/components/sidebar"
 import StatisticsChart from "@/components/statistics-chart"
-import DatePickerCalendar from "@/components/date-picker-calendar"
+// import DatePickerCalendar from "@/components/date-picker-calendar"
 import Header from "@/components/header"
 
 export default function Home() {
@@ -15,12 +15,12 @@ export default function Home() {
       <div className="flex-1">
         <Header />
         <main className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="">
+            <div className="">
               <StatisticsChart />
             </div>
             <div>
-              <DatePickerCalendar selectedDate={selectedDate} onDateChange={setSelectedDate} />
+              {/* <DatePickerCalendar selectedDate={selectedDate} onDateChange={setSelectedDate} /> */}
             </div>
           </div>
         </main>
