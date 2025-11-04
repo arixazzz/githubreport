@@ -41,51 +41,52 @@ export default function StatisticsChart() {
           </div>
         </div>
       </div>
-
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorAddition" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="rgb(96, 165, 250)" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="rgb(96, 165, 250)" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="colorDeletion" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="rgb(34, 197, 94)" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="rgb(34, 197, 94)" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="colorChange" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="rgb(239, 68, 68)" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="rgb(239, 68, 68)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" />
-          <YAxis stroke="rgba(255,255,255,0.5)" />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              color: "#fff",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="addition"
-            stroke="rgb(96, 165, 250)"
-            fillOpacity={1}
-            fill="url(#colorAddition)"
-          />
-          <Area
-            type="monotone"
-            dataKey="deletion"
-            stroke="rgb(34, 197, 94)"
-            fillOpacity={1}
-            fill="url(#colorDeletion)"
-          />
-          <Area type="monotone" dataKey="change" stroke="rgb(239, 68, 68)" fillOpacity={1} fill="url(#colorChange)" />
-        </AreaChart>
-      </ResponsiveContainer>
+      <div className="h-screen">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorAddition" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="rgb(96, 165, 250)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="rgb(96, 165, 250)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorDeletion" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="rgb(34, 197, 94)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="rgb(34, 197, 94)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorChange" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="rgb(239, 68, 68)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="rgb(239, 68, 68)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" />
+            <YAxis stroke="rgba(255,255,255,0.5)" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "8px",
+                color: "#fff",
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="addition"
+              stroke="rgb(96, 165, 250)"
+              fillOpacity={1}
+              fill="url(#colorAddition)"
+            />
+            <Area
+              type="monotone"
+              dataKey="deletion"
+              stroke="rgb(34, 197, 94)"
+              fillOpacity={1}
+              fill="url(#colorDeletion)"
+            />
+            <Area type="monotone" dataKey="change" stroke="rgb(239, 68, 68)" fillOpacity={1} fill="url(#colorChange)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }
