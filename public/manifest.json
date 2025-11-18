@@ -1,0 +1,21 @@
+{
+  "name": "Maincore fe",
+  "short_name": "Maincore",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1565C0",
+  "icons": [
+    {
+      "src": "/assets/icons/logo.svg",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/logo.svg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

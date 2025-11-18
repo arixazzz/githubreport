@@ -1,0 +1,29 @@
+// file: .vscode/snippets/react.json
+{
+  "Breadcrumb Page With Access": {
+    "prefix": "pageAcc",
+    "body": [
+      "import { BreadcrumbSetItem } from \"@/components/shared/layouts/myBreadcrumb\";",
+      "import React from \"react\";",
+      "",
+      "export const access: AccessRule = {",
+      "  permissions: [\"$1\"],",
+      "  roles: [\"$2\"],",
+      "};",
+      "",
+      "export default function Page() {",
+      "  return (",
+      "    <div className=\"p-4\">",
+      "      <BreadcrumbSetItem",
+      "        items={[",
+      "          { title: \"Dashboard\", href: \"/dashboard\" },",
+      "          { title: \"$3\" }",
+      "        ]}",
+      "      />",
+      "    </div>",
+      "  );",
+      "}"
+    ],
+    "description": "Generate React page with breadcrumb and access rule"
+  }
+}

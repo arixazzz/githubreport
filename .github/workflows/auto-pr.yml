@@ -1,0 +1,62 @@
+name: Automatically create / update pull request
+
+on:
+  push:
+    branches-ignore:
+      - "main"
+      - "dev"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-pr:
+    runs-on: ubuntu-latest
+
+    if: startsWith(github.ref, 'refs/heads/feat/') || startsWith(github.ref, 'refs/heads/fix/') || startsWith(github.ref, 'refs/heads/docs/') || startsWith(github.ref, 'refs/heads/style/') || startsWith(github.ref, 'refs/heads/refactor/') || startsWith(github.ref, 'refs/heads/test/') || startsWith(github.ref, 'refs/heads/chore/')
+
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create or update PR using GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }} # Token dari Secrets
+        run: |
+          gh_pr_up() {
+            gh pr create "$@" || gh pr edit "$@"
+          }
+
+          echo "🤖 PR Otomatis dari \`${GITHUB_REF_NAME}\` ke \`main\`" > pr-body.md
+          echo "" >> pr-body.md
+          cat .github/PULL_REQUEST_TEMPLATE.md >> pr-body.md
+
+          gh_pr_up --title "Auto PR from ${GITHUB_REF_NAME}" \
+                   --body-file pr-body.md \
+                   --base main
+
+      - name: Add label to auto-generated PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          PR_URL=$(gh pr view --json url -q .url)
+          gh pr edit "$PR_URL" --add-label "auto-pr"
+
+      - name: Mention PR author with reminder
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          PR_URL=$(gh pr view --json url -q .url)
+          gh pr comment "$PR_URL" --body "👋 Hi @${{ github.actor }}, PR ini dibuat otomatis dari branch \`${{ github.ref_name }}\`.
+
+          📌 *Mohon edit kembali bagian deskripsi PR sesuai dengan pekerjaan yang dilakukan.*
+
+          Checklist bantuannya:
+
+          - [ ] Jelaskan fitur atau perbaikan
+          - [ ] Tandai breaking changes kalau ada
+          - [ ] Tambahkan referensi issue/tiket
+          - [ ] Pastikan commit sesuai standar
+
+          🙏 Terima kasih!"

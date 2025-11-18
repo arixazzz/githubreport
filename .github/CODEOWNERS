@@ -1,0 +1,16 @@
+# CODEOWNERS
+
+# Only specific users can approve changes to these critical files
+README.md                 @sakatimuna7 @NewusTech
+CONTRIBUTING.md           @sakatimuna7 @NewusTech
+CONTRIBUTING_ID.md        @sakatimuna7 @NewusTech
+PULL_REQUEST_TEMPLATE.md  @sakatimuna7 @NewusTech
+.github/workflows/        @sakatimuna7 @NewusTech
+.eslintrc.json            @sakatimuna7 @NewusTech
+tsconfig.json             @sakatimuna7 @NewusTech
+.lintstagedrc             @sakatimuna7 @NewusTech
+.prettierrc               @sakatimuna7 @NewusTech
+.prettierignore           @sakatimuna7 @NewusTech
+.nnvmrc                   @sakatimuna7 @NewusTech
+package.json              @sakatimuna7 @NewusTech
+.husky/                   @sakatimuna7 @NewusTech

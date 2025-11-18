@@ -1,0 +1,17 @@
+name: Auto Assign Reviewer
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write # penting untuk allow PR comment
+
+jobs:
+  auto-assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: kentaro-m/auto-assign-action@v1.2.4
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"

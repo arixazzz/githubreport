@@ -1,0 +1,21 @@
+# 📌 Format commit yang benar:
+
+#
+
+# feat: tambah fitur login
+
+# fix: perbaiki validasi password
+
+# chore: update package.json
+
+#
+
+# ❗Contoh yang salah (akan ditolak):
+
+# - update login
+
+# - perbaikan bug
+
+# - tambahin fitur
+
+# Jangan hapus baris komentar (#), karena tidak akan ikut ke dalam commit.

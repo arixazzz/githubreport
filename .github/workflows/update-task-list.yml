@@ -1,0 +1,26 @@
+name: Update Task Sheet
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  update-sheet:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send task data to Google Sheets webhook
+        run: |
+          TASK_KEYWORD=$(echo "${{ github.event.pull_request.body }}" | grep -oE "#(TASK|BUG|FEATURE)-[0-9]+")
+            curl -X POST https://hooks.zapier.com/hooks/catch/123456/abcde \
+            -H "Content-Type: application/json" \
+            -d '{
+                "task": "#TASK-123",
+                "user": "toni",
+                "title": "Fix login issue",
+                "url": "https://github.com/your-repo/pull/23",
+                "merged_at": "2024-05-06T10:00:00Z"
+            }'
+

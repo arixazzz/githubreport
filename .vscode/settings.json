@@ -1,0 +1,28 @@
+{
+  "tailwindCSS.tailwindConfig": "./tailwind.config.ts",
+
+  // biar IntelliSense nge-scan string di pola object & helper
+  "tailwindCSS.experimental.classRegex": [
+    // match: headerClassName: "..."
+    ["headerClassName:\\s*['\"`]([^'\"`]*)['\"`]", 1],
+    // match: cn("...")
+    ["\\bcn\\(([^)]*)\\)", 1],
+    // match: cva("...")
+    ["\\bcva\\(([^)]*)\\)", 1],
+  ],
+
+  // daftarkan key custom sebagai class attributes
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    ".*[cC]lass(Name)?",
+    "ngClass",
+    "class:list",
+    "containerClassName",
+    "textClassName",
+    "labelClassName",
+    "valueClassName",
+    "editorClassName",
+    "headerClassName"
+  ]
+}

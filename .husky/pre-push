@@ -1,0 +1,4 @@
+pnpm format
+pnpm lint
+pnpm lint:structure
+pnpm lint:zodmix
