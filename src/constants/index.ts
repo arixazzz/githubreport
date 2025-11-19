@@ -1,8 +1,10 @@
 import { NavItem } from "@/types/interface";
 import {
+  Bell,
   DockIcon,
   Image,
   LayoutDashboard,
+  List,
   Map,
   Table2,
   Users,
@@ -25,61 +27,76 @@ export const getNavData = (): navDateType => {
         icon: LayoutDashboard,
       },
       {
-        title: "Form Input",
-        url: "/form-input",
-        icon: DockIcon,
-        items: [
-          {
-            title: "Semua Input",
-            url: "/form-input/all",
-          },
-          {
-            title: "Surat",
-            url: "/form-input/letter",
-          },
-        ],
+        title: "Listing Project",
+        url: "/listing-project",
+        icon: List,
       },
       {
         title: "Manajemen Pengguna",
-        url: "",
+        url: "/manajemen-user",
         icon: Users,
-        items: [
-          {
-            title: "Users",
-            url: "/users",
-          },
-          {
-            title: "Roles",
-            url: "/roles",
-          },
-        ],
       },
       {
-        title: "Tables",
-        url: "/tables",
-        icon: Table2,
-        items: [
-          {
-            title: "tables admin",
-            url: "/tables/admin",
-          },
-        ],
+        title: "Notifikasi",
+        url: "/notifikasi",
+        icon: Bell,
       },
-      {
-        title: "Maps View",
-        url: "/maps",
-        icon: Map,
-      },
-      {
-        title: "Images",
-        url: "/images",
-        icon: Image,
-      },
-      {
-        title: "View Label",
-        url: "/view-label",
-        icon: View,
-      },
+      // {
+      //   title: "Form Input",
+      //   url: "/form-input",
+      //   icon: DockIcon,
+      //   items: [
+      //     {
+      //       title: "Semua Input",
+      //       url: "/form-input/all",
+      //     },
+      //     {
+      //       title: "Surat",
+      //       url: "/form-input/letter",
+      //     },
+      //   ],
+      // },
+      // {
+      //   title: "Manajemen Pengguna",
+      //   url: "",
+      //   icon: Users,
+      //   items: [
+      //     {
+      //       title: "Users",
+      //       url: "/users",
+      //     },
+      //     {
+      //       title: "Roles",
+      //       url: "/roles",
+      //     },
+      //   ],
+      // },
+      // {
+      //   title: "Tables",
+      //   url: "/tables",
+      //   icon: Table2,
+      //   items: [
+      //     {
+      //       title: "tables admin",
+      //       url: "/tables/admin",
+      //     },
+      //   ],
+      // },
+      // {
+      //   title: "Maps View",
+      //   url: "/maps",
+      //   icon: Map,
+      // },
+      // {
+      //   title: "Images",
+      //   url: "/images",
+      //   icon: Image,
+      // },
+      // {
+      //   title: "View Label",
+      //   url: "/view-label",
+      //   icon: View,
+      // },
     ],
   };
 };

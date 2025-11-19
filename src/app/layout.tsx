@@ -58,7 +58,7 @@ export default async function RootLayout(
       <body className={cn(poppins.className, "scroll-smooth")}>
         <ThemeProvider>
           <QueryProvider>
-            <NextTopLoader showSpinner={false} color="#475D37" />
+            <NextTopLoader showSpinner={false} color="#00218F" />
             <FilterRegistryProvider>
               <Suspense>
                 <ServiceWorkerWarp>

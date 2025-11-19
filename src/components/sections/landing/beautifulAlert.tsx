@@ -127,7 +127,7 @@ export default function BeautifulAlert() {
       scale: 1.05,
       y: -2,
       transition: {
-        type: "spring",
+        type: "spring" as const, // 'as const' makes the string literal type correct
         stiffness: 400,
         damping: 10,
       },
