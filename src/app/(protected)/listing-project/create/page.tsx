@@ -4,6 +4,7 @@ import {
   CustomFormInput,
   inputFilters,
 } from "@/components/shared/forms/customFormInput";
+import { CustomFormTextArea } from "@/components/shared/forms/customFormTextArea";
 import { BreadcrumbSetItem } from "@/components/shared/layouts/myBreadcrumb";
 import TitleHeader from "@/components/shared/title";
 import { Button } from "@/components/ui/button";
@@ -53,13 +54,27 @@ export default function Page() {
               <CustomFormInput<any>
                 name="name"
                 label="Nama"
-                placeholder="Masukkan Nama"
+                placeholder="Masukkan Nama Project"
+              />
+              <CustomFormTextArea<any>
+                name="Detail"
+                label="Detail Project"
+                placeholder="Masukkan Detail Project"
               />
               <CustomFormInput<any>
-                name="email"
-                label="Email"
-                placeholder="Masukkan Nama"
-                filterInput={inputFilters.email}
+                name="Developer Yang Ditugaskan"
+                label="Developer Yang Ditugaskan"
+                placeholder="Masukkan Nama Developer"
+              />
+              <CustomFormInput<any>
+                name="Tanggal Deadline"
+                label="Tanggal Deadline"
+                placeholder="Masukkan Tanggal Deadline"
+              />
+              <CustomFormInput<any>
+                name="URL GitHub"
+                label="URL GitHub"
+                placeholder="Masukkan URL GitHub"
               />
             </div>
             <div className="flex gap-x-4 justify-end mt-10">

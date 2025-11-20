@@ -75,9 +75,11 @@ const Page = () => {
                   Detail
                 </Button>
               </Link>
-              <Button className="rounded-full bg-gray-500 text-white">
-                Report
-              </Button>
+              <Link href={"/listing-project/laporan/2"}>
+                <Button className="rounded-full bg-gray-500 text-white">
+                  Laporan
+                </Button>
+              </Link>
             </div>
           </div>
         ))}
