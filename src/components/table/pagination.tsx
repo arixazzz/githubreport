@@ -130,7 +130,7 @@ const Pagination: React.FC<PaginationProps> = ({
     <div className="flex items-center justify-end gap-5 w-full my-6">
       {displayItems && (
         <React.Fragment>
-          <div className="text-primary-500">
+          <div className="text-primary">
             {Math.min(currentPage * itemsPerPage, totalItems)} data dari{" "}
             {totalItems} data
           </div>

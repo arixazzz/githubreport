@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   List,
   Map,
+  Notebook,
   Table2,
   Users,
   View,
@@ -37,9 +38,9 @@ export const getNavData = (): navDateType => {
         icon: Users,
       },
       {
-        title: "Notifikasi",
-        url: "/notifikasi",
-        icon: Bell,
+        title: "Log Aktivitas",
+        url: "/log-aktivitas",
+        icon: Notebook,
       },
       // {
       //   title: "Form Input",

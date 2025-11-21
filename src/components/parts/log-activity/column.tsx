@@ -31,6 +31,11 @@ export const logActivityColumns: ColumnDef<LogAcivityResponse>[] = [
     },
   },
   {
+    accessorKey: "Name",
+    header: "Nama",
+    cell: ({ row }) => row.original.detail,
+  },
+  {
     accessorKey: "Tanggal",
     header: "Tanggal",
     cell: ({ row }) => formatDate(row.original.createdAt),
