@@ -43,11 +43,11 @@ export default function Page() {
       <BreadcrumbSetItem
         items={[
           {
-            title: "Listing Project",
+            title: "Tambah Pengguna",
           },
           {
-            title: "Listing Project",
-            href: "/listing-project",
+            title: "Tambah Pengguna",
+            href: "/tambah-user",
           },
           {
             title: "Tambah",
@@ -57,7 +57,7 @@ export default function Page() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col">
-            <TitleHeader title="Tambah Project" />
+            <TitleHeader title="Tambah Pengguna" />
             <div className="mt-3 flex flex-col gap-3">
               <CustomFormInput<any>
                 name="name"
@@ -70,20 +70,12 @@ export default function Page() {
                 placeholder="Masukkan Email"
               />
 
-              <CustomFormSelectSearch
-                label="Role"
-                name="role"
-                options={[
-                  { label: "Admin", value: "admin" },
-                  { label: "User", value: "user" },
-                ]}
-              />
               <CustomFormMultiSelect
                 label="posisi"
                 name="try"
                 options={[
-                  { label: "Fron-End", value: "Fron-End" },
-                  { label: "Back-End", value: "Back-End" },
+                  { label: "FrontEnd Developer", value: "FrontEnd Developer" },
+                  { label: "BacktEnd Developer", value: "BackEnd Developer" },
                 ]}
               />
 

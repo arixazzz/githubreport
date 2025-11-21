@@ -10,25 +10,40 @@ import Link from "next/link";
 import ModalDelete from "@/components/shared/modalDelete";
 import Image from "next/image";
 import ActionOption from "@/components/table/actionOption";
+import { useActionState } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
-export const dummyUser = [
+export const Modal = ({ isOpen, onClose, children }: any) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black opacity-50" onClick={onClose} />
+      <div className="bg-white rounded shadow-lg z-10 max-w-md w-full">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export const dummyUser: ManajemenUserInterface[] = [
   {
     id: "1",
-    nama: "Admin",
-    email: "admin@gmail.com",
-    role: "Administrator",
+    nama: "faqih",
+    email: "faqih@gmail.com",
+    role: "Frontend Developer",
   },
   {
     id: "2",
-    nama: "Admin",
-    email: "admin@gmail.com",
-    role: "Administrator",
+    nama: "Fajri",
+    email: "fajri@gmail.com",
+    role: "Backend Developer",
   },
   {
     id: "3",
-    nama: "User",
-    email: "User@gmail.com",
-    role: "User",
+    nama: "Dini",
+    email: "dini@gmail.com",
+    role: "Frontend Developer",
   },
 ];
 
@@ -56,22 +71,50 @@ export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
   {
     accessorKey: "action",
     header: "Aksi",
-    cell: ({ row }) => (
-      <div className="">
-        <Link
-          className="text-yellow-500"
-          href={`/manajemen-user/edit/${row.original.id}`}
-        >
-          Edit
-        </Link>
-        {" | "}
-        <Link
-          className="text-yellow-500"
-          href={`/manajemen-user/hapus/${row.original.id}`}
-        >
-          hapus
-        </Link>
-      </div>
-    ),
+    cell: ({ row }) => <EditActionButton row={row} />,
   },
 ];
+const EditActionButton = ({ row }: { row: any }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newDeskripsi, setNewDeskripsi] = useState(row.original.role);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleSave = () => {
+    // Simulate saving the edited deskripsi
+    console.log("New Deskripsi Saved:", newDeskripsi);
+    setIsModalOpen(false); // Close the modal after saving
+  };
+
+  return (
+    <>
+      <Button onClick={openModal} className="text-yellow-500">
+        Edit
+      </Button>
+
+      {/* Modal for editing deskripsi */}
+      {isModalOpen && (
+        <Modal isOpen={isModalOpen} onClose={closeModal}>
+          <div className="p-4">
+            <h3 className="text-xl mb-4">Edit</h3>
+            <textarea
+              value={newDeskripsi}
+              onChange={(e) => setNewDeskripsi(e.target.value)}
+              className="w-full p-2 border rounded"
+              rows={4}
+            />
+            <div className="mt-4 flex justify-end">
+              <Button onClick={closeModal} className="mr-2">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="bg-blue-500 text-white">
+                Save
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+};
