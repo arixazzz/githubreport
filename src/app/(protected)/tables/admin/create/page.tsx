@@ -32,11 +32,11 @@ export default function Page() {
       <BreadcrumbSetItem
         items={[
           {
-            title: "Produk",
+            title: "Tambah Pengguna",
             href: "/tables/admin",
           },
           {
-            title: "Tambah",
+            title: "Tambah Pengguna",
           },
         ]}
       />
