@@ -25,12 +25,14 @@ export default function Page() {
         ]}
       />
       <Card>
-        <h1 className="text-2xl font-bold ">Welcome to the Dashboard</h1>
+        <h1 className="text-2xl font-bold ">Statistik Project</h1>
       </Card>
 
-      <div className="mt-6 ml-10 mr-10 mb-10 p-4 bg-white rounded-lg shadow-md">
-        <ComposedChartExample />
-      </div>
+      <Card>
+        <div className="mt-6 ml-10 mr-10 mb-10 p-4 bg-white rounded-lg shadow-md">
+          <ComposedChartExample />
+        </div>
+      </Card>
     </div>
   );
 }

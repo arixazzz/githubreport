@@ -13,6 +13,7 @@ import { Form } from "@/components/ui/form";
 import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { CustomFormMultiSelect } from "@/components/shared/forms/customFormMultipleSelect";
 
 export const access: AccessRule = {
   permissions: [""], // optional overide role jika ada permission
@@ -61,10 +62,16 @@ export default function Page() {
                 label="Detail Project"
                 placeholder="Masukkan Detail Project"
               />
-              <CustomFormInput<any>
-                name="Developer Yang Ditugaskan"
-                label="Developer Yang Ditugaskan"
-                placeholder="Masukkan Nama Developer"
+              <CustomFormMultiSelect
+                label="Developer"
+                name="try"
+                options={[
+                  {
+                    label: "Fajri (FrontEnd Developer)",
+                    value: "FAjri (FrontEnd Developer)",
+                  },
+                  { label: "BacktEnd Developer", value: "BackEnd Developer" },
+                ]}
               />
               <CustomFormInput<any>
                 name="Tanggal Deadline"

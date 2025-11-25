@@ -29,12 +29,15 @@ export default function ComposedChartExample({
   isAnimationActive?: boolean;
 }) {
   return (
-    <div className="w-full h-[400px]">
-      <ResponsiveContainer>
+    <div className="w-full h-[500px]">
+      {" "}
+      {/* Increased height */}
+      <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data}>
           <CartesianGrid stroke="#f5f5f5" />
           <XAxis dataKey="name" />
-          <YAxis width={40} />
+          <YAxis width={40} type="number" domain={[0, "auto"]} />{" "}
+          {/* Added domain auto for scaling */}
           <Legend />
           <Tooltip />
           <Area

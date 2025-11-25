@@ -76,14 +76,18 @@ export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
 ];
 const EditActionButton = ({ row }: { row: any }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newDeskripsi, setNewDeskripsi] = useState(row.original.role);
+  const [newNama, setNewNama] = useState(row.original.nama);
+  const [newEmail, setNewEmail] = useState(row.original.email);
+  const [newRole, setNewRole] = useState(row.original.role);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   const handleSave = () => {
-    // Simulate saving the edited deskripsi
-    console.log("New Deskripsi Saved:", newDeskripsi);
+    // Simulate saving the edited data
+    console.log("New Nama Saved:", newNama);
+    console.log("New Email Saved:", newEmail);
+    console.log("New Role Saved:", newRole);
     setIsModalOpen(false); // Close the modal after saving
   };
 
@@ -93,17 +97,56 @@ const EditActionButton = ({ row }: { row: any }) => {
         Edit
       </Button>
 
-      {/* Modal for editing deskripsi */}
+      {/* Modal for editing user data */}
       {isModalOpen && (
         <Modal isOpen={isModalOpen} onClose={closeModal}>
           <div className="p-4">
-            <h3 className="text-xl mb-4">Edit</h3>
-            <textarea
-              value={newDeskripsi}
-              onChange={(e) => setNewDeskripsi(e.target.value)}
-              className="w-full p-2 border rounded"
-              rows={4}
-            />
+            <h3 className="text-xl mb-4">Edit User</h3>
+            <div className="mb-4">
+              <label
+                htmlFor="nama"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Nama
+              </label>
+              <input
+                id="nama"
+                value={newNama}
+                onChange={(e) => setNewNama(e.target.value)}
+                className="w-full p-2 border rounded"
+                type="text"
+              />
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="w-full p-2 border rounded"
+                type="email"
+              />
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="role"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Role
+              </label>
+              <input
+                id="role"
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                className="w-full p-2 border rounded"
+                type="text"
+              />
+            </div>
             <div className="mt-4 flex justify-end">
               <Button onClick={closeModal} className="mr-2">
                 Cancel
