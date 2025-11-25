@@ -1,5 +1,5 @@
 "use client";
-import ComposedChartExample from "@/components/charts/ComposedChartExample";
+import ComposedChartExample from "@/components/charts/composedChartExample";
 import { BreadcrumbSetItem } from "@/components/shared/layouts/myBreadcrumb";
 import { Card } from "@/components/ui/card";
 import React from "react";
