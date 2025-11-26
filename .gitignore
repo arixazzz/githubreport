@@ -44,3 +44,4 @@ next-env.d.ts
 .swc
 
 *.log
+/src/generated/prisma
