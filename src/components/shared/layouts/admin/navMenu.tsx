@@ -16,8 +16,8 @@ export default function NavMenu() {
   const { user } = useProfile();
   return (
     <div className="ml-auto flex items-center gap-x-3 md:gap-x-6">
-      <NotificationMenu />
-      <DropdownMenu>
+      {/* <NotificationMenu /> */}
+      {/* <DropdownMenu>
         <DropdownMenuTrigger className="flex gap-x-4 text-sm md:text-base">
           <div className="font-semibold text-end">
             <p className="line-clamp-1">{user?.name ?? "User"}</p>
@@ -57,7 +57,7 @@ export default function NavMenu() {
             <DropdownMenuItem>Log Aktivitas</DropdownMenuItem>
           </Link>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenu> */}
     </div>
   );
 }

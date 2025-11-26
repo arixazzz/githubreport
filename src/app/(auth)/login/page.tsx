@@ -8,7 +8,7 @@ import {
 import { ensureWebPushSubscription } from "@/components/parts/webpush/api";
 import ForgotPassword from "@/components/sections/login/forgotPassword";
 import { CustomFormInput } from "@/components/shared/forms/customFormInput";
-import GoogleSignInButton from "@/components/shared/googleSignInButton";
+import GitHubSignInButton from "@/components/shared/GitHubSignInButton";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import useShowErrors from "@/hooks/useShowErrors";
@@ -57,8 +57,10 @@ export default function LoginPage() {
       <div className="container flex h-screen w-screen flex-col items-center justify-center">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Masuk</h1>
-            <p className="text-sm text-muted-foreground">Masuk ke sistem</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
+            <p className="text-sm text-muted-foreground">
+              Login ke GitRepo Platform
+            </p>
           </div>
           <div className="grid gap-6">
             <Form {...form}>
@@ -66,8 +68,8 @@ export default function LoginPage() {
                 <div className="grid gap-4">
                   <CustomFormInput<LoginPayload>
                     name="email"
-                    label="Email/ NIK"
-                    placeholder="Login menggunakan NIK/Email"
+                    label="Email"
+                    placeholder="Login menggunakan Email"
                     required
                   />
                   <CustomFormInput<LoginPayload>
@@ -77,9 +79,10 @@ export default function LoginPage() {
                     type="password"
                     required
                   />
-                  <ForgotPassword />
-                  <Button type="submit">Masuk</Button>
                 </div>
+                <Button type="submit" className="w-full py-3 mt-4">
+                  Masuk
+                </Button>
               </form>
             </Form>
 
@@ -94,18 +97,9 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <GoogleSignInButton />
+              <GitHubSignInButton />
             </div>
           </div>
-          <p className="px-8 text-center text-sm text-muted-foreground">
-            Belum punya akun?
-            <Link
-              href="/register"
-              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Daftar
-            </Link>
-          </p>
         </div>
       </div>
     </main>

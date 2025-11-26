@@ -8,8 +8,11 @@ import { BreadcrumbSetItem } from "@/components/shared/layouts/myBreadcrumb";
 import TitleHeader from "@/components/shared/title";
 import DataTable from "@/components/table/dataTable";
 import { Button } from "@/components/ui/button";
+import { FiFilter, FiChevronDown } from "react-icons/fi";
 import { Card } from "@/components/ui/card";
 import React, { useState } from "react";
+import { TableProvider } from "@/components/table";
+import TableBar from "@/components/table/tableBar";
 
 const Page = () => {
   type Row = {
@@ -43,6 +46,25 @@ const Page = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [newData, setNewData] = useState<Row | null>(null);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterType, setFilterType] = useState<
+    "harian" | "mingguan" | "bulanan" | null
+  >(null);
+
+  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setShowFilter(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [wrapperRef]);
 
   const handleEdit = (index: number) => {
     setIsEditing(true);
@@ -79,14 +101,24 @@ const Page = () => {
           },
         ]}
       />
-      <TitleHeader title="Laporan Project" />
-      <Button className="rounded-full">Ganerate AI</Button>
-      <DataTable
-        columns={laporanColumns}
-        data={dummyLaporan}
-        displayItems
-        displayPageSize
-      />
+
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <TitleHeader title="Laporan Project" />
+        </div>
+      </div>
+
+      <TableProvider>
+        <TableBar filterItems={["date"]} />
+        <div className="mt-4">
+          <DataTable
+            columns={laporanColumns}
+            data={dummyLaporan}
+            displayItems
+            displayPageSize
+          />
+        </div>
+      </TableProvider>
     </Card>
   );
 };

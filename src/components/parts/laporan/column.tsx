@@ -19,7 +19,8 @@ export const dummyLaporan: LaporanResponse[] = [
   {
     id: "1",
     date: "2023-10-01",
-    name: "Bendry",
+    name: "Benry",
+    nameproject: "Project A",
     deskripsi: "Deskripsi singkat tentang Laporan Proyek A",
   },
 ];
@@ -39,6 +40,11 @@ export const laporanColumns: ColumnDef<LaporanResponse>[] = [
     accessorKey: "name",
     header: "Nama",
     cell: ({ row }) => row.original.name,
+  },
+  {
+    accessorKey: "nameproject",
+    header: "Nama Project",
+    cell: ({ row }) => row.original.nameproject,
   },
   {
     accessorKey: "deskripsi",

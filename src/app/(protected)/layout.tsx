@@ -37,7 +37,6 @@ export default function ProtectedLayout({
         </div>
       </SidebarInset>
     </SidebarProvider>
-    // <SocketNotificationCustom />
     // </WebPushWarper>
   );
 }
