@@ -10,36 +10,52 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+ 
 }
-  
-model Project {
-  id                    Int       @id @default(autoincrement())
-  title                  String
-  detail                String    @unique
-  deadline       DateTime
-  stack          String
-  linkgithub    String @unique
 
+model Project {
+  id          Int       @id @default(autoincrement())
+  title       String
+  detail      String    @unique
+  deadline    DateTime
+  stack       String
+  linkgithub  String    @unique
+
+  reports     Report[]
 }
 
 model developer {
-    id       Int    @id @default(autoincrement())
-    userId   Int    
-    projectId Int   
+  id        Int    @id @default(autoincrement())
+  userId    Int    
+  projectId Int
 }
 
-model user{
-    id       Int    @id @default(autoincrement())
-    nama     String
-    usernamegithub String @unique
-    password String
-    email    String @unique
-    role     String
+model user {
+  id              Int      @id @default(autoincrement())
+  nama            String
+  usernamegithub  String   @unique
+  password        String?
+  email           String   @unique
+  role            String
+
+  reports         Report[]
 }
 
 model logActivity {
-    id        Int      @id @default(autoincrement())
-    userId    Int
-    activity  String
-    timestamp DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  activity  String
+  timestamp DateTime @default(now())
+}
+
+model Report {
+  id         Int       @id @default(autoincrement())
+  title      String
+  content    String
+  userId     Int
+  projectId  Int
+  createdAt  DateTime  @default(now())
+
+  user       user      @relation(fields: [userId], references: [id])
+  project    Project   @relation(fields: [projectId], references: [id])
 }

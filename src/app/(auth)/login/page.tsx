@@ -6,9 +6,8 @@ import {
   loginValidation,
 } from "@/components/parts/login/validation";
 import { ensureWebPushSubscription } from "@/components/parts/webpush/api";
-import ForgotPassword from "@/components/sections/login/forgotPassword";
+import GitHubSignInButton from "@/components/shared/dataGitHubSignInButton";
 import { CustomFormInput } from "@/components/shared/forms/customFormInput";
-import GitHubSignInButton from "@/components/shared/gitHubSignInButton";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import useShowErrors from "@/hooks/useShowErrors";
@@ -79,10 +78,9 @@ export default function LoginPage() {
                     type="password"
                     required
                   />
+
+                  <Button type="submit">Masuk</Button>
                 </div>
-                <Button type="submit" className="w-full py-3 mt-4">
-                  Masuk
-                </Button>
               </form>
             </Form>
 
@@ -96,10 +94,17 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
-            <div className="grid gap-2">
-              <GitHubSignInButton />
-            </div>
+            <GitHubSignInButton />
           </div>
+          <p className="px-8 text-center text-sm text-muted-foreground">
+            Belum punya akun?
+            <Link
+              href="/register"
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Daftar
+            </Link>
+          </p>
         </div>
       </div>
     </main>

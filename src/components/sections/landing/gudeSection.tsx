@@ -472,41 +472,41 @@ src/
             <CardContent className="pt-6">
               <p className="mb-4 flex flex-col">
                 This template is setup by newus teams :{" "}
-                <ul className="list-disc ml-4 mt-1 space-y-1">
-                  <li>
-                    <a
-                      href="https://github.com/aldngrha/"
-                      className="text-primary underline"
-                    >
-                      @aldngrha
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="https://github.com/sakatimuna7/"
-                      className="text-primary underline"
-                    >
-                      @sakatimuna7
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="https://github.com/robinta19/"
-                      className="text-primary underline"
-                    >
-                      @robinta19
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="https://github.com/Kaben011201/"
-                      className="text-primary underline"
-                    >
-                      @Kaben011201
-                    </a>
-                  </li>
-                </ul>
               </p>
+              <ul className="list-disc ml-4 mt-1 space-y-1">
+                <li>
+                  <a
+                    href="https://github.com/aldngrha/"
+                    className="text-primary underline"
+                  >
+                    @aldngrha
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/sakatimuna7/"
+                    className="text-primary underline"
+                  >
+                    @sakatimuna7
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/robinta19/"
+                    className="text-primary underline"
+                  >
+                    @robinta19
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/Kaben011201/"
+                    className="text-primary underline"
+                  >
+                    @Kaben011201
+                  </a>
+                </li>
+              </ul>
 
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <div className="flex items-center gap-2">

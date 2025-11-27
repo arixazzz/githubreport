@@ -9,7 +9,7 @@ import {
   CustomFormInput,
   inputFilters,
 } from "@/components/shared/forms/customFormInput";
-import GoogleSignInButton from "@/components/shared/gitHubSignInButton";
+import GoogleSignInButton from "@/components/shared/dataGitHubSignInButton";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import useShowErrors from "@/hooks/useShowErrors";
