@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import process from "process";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -55,5 +56,5 @@ export async function GET(req: NextRequest) {
 
   console.log("Created User:", responseData);
 
-  return Response.redirect(new URL("/", req.url));
+  return Response.redirect(new URL("/dashboard", req.url));
 }

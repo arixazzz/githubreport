@@ -33,6 +33,9 @@ export default function ProductPage() {
           {
             title: "Manajemen User",
           },
+          {
+            title: "Manajemen User",
+          },
         ]}
       />
       <TitleHeader title="Manajemen User" />

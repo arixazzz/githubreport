@@ -23,14 +23,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 export const access: AccessRule = {
-  permissions: [""], // optional overide role jika ada permission
+  permissions: [""], // optional override role jika ada permission
   roles: [""], // optional
 };
 
 export default function Page() {
   const router = useRouter();
   const form = useForm<any>({
-    // resolver: zodResolver()// resolver,
+    // resolver: zodResolver() // resolver,
     defaultValues: {},
   });
 
@@ -43,14 +43,14 @@ export default function Page() {
       <BreadcrumbSetItem
         items={[
           {
-            title: "Tambah Pengguna",
+            title: "Manajemen User",
           },
           {
-            title: "Tambah Pengguna",
-            href: "/tambah-user",
+            title: "Manajemen User",
+            href: "/manajemen-user",
           },
           {
-            title: "Tambah",
+            title: "Tambah User",
           },
         ]}
       />
@@ -71,29 +71,43 @@ export default function Page() {
               />
 
               <CustomFormMultiSelect
-                label="posisi"
+                label="Posisi"
                 name="try"
                 options={[
                   { label: "FrontEnd Developer", value: "FrontEnd Developer" },
-                  { label: "BacktEnd Developer", value: "BackEnd Developer" },
+                  { label: "BackEnd Developer", value: "BackEnd Developer" },
                 ]}
               />
 
-              <Button
-                type="button"
-                variant={"outline"}
-                className="rounded-full min-w-32"
-                onClick={() => router.back()}
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                className="rounded-full min-w-32"
-                disabled={false}
-              >
-                {false ? <Loader className="animate-spin" /> : "Simpan"}
-              </Button>
+              <CustomFormInput<any>
+                name="githubUsername"
+                label="GitHub Username"
+                placeholder="Masukkan Username GitHub"
+              />
+              <CustomFormInput<any>
+                name="password"
+                label="Password"
+                placeholder="Masukkan Password"
+                type="password"
+              />
+
+              <div className="mt-4 flex gap-4">
+                <Button
+                  type="button"
+                  variant={"outline"}
+                  className="rounded-full min-w-32"
+                  onClick={() => router.back()}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  className="rounded-full min-w-32"
+                  disabled={false}
+                >
+                  {false ? <Loader className="animate-spin" /> : "Simpan"}
+                </Button>
+              </div>
             </div>
           </div>
         </form>

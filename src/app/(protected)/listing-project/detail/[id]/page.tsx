@@ -2,34 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-
-type BreadcrumbItem = {
-  title: string;
-  href?: string;
-};
-
-const BreadcrumbSetItem: React.FC<{ items: BreadcrumbItem[] }> = ({
-  items,
-}) => {
-  return (
-    <nav aria-label="breadcrumb" className="mb-6">
-      <ol className="flex space-x-2 text-sm text-white">
-        {items.map((item, idx) => (
-          <li key={idx} className="inline-flex items-center">
-            {item.href ? (
-              <Link href={item.href} className="underline">
-                {item.title}
-              </Link>
-            ) : (
-              <span>{item.title}</span>
-            )}
-            {idx < items.length - 1 && <span className="mx-2">/</span>}
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
-};
+import { BreadcrumbSetItem } from "@/components/shared/layouts/myBreadcrumb";
 
 // Data untuk detail project
 const projectDetail = {
@@ -46,7 +19,7 @@ Aplikasi ini juga memungkinkan pelacakan Riwayat Antrean dan Riwayat Permohonan.
 
 const Page: React.FC = () => {
   return (
-    <div className="p-8 bg-gradient-to-r from-blue-200 to-blue-500 rounded-lg shadow-lg">
+    <div className="p-8 bg-white rounded-lg shadow-sm">
       <BreadcrumbSetItem
         items={[
           {
@@ -61,12 +34,9 @@ const Page: React.FC = () => {
           },
         ]}
       />
-      <h1 className="text-3xl font-extrabold text-white mb-6">
-        {projectDetail.name}
-      </h1>
 
       {/* Deskripsi Project */}
-      <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
+      <div className="mb-8 p-6 bg-white rounded-xl border border-gray-300 shadow-md">
         <h2 className="text-xl font-medium text-gray-700 mb-4">
           Detail Project
         </h2>
@@ -76,7 +46,7 @@ const Page: React.FC = () => {
       </div>
 
       {/* Developer yang Terlibat */}
-      <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
+      <div className="mb-8 p-6 bg-white rounded-xl border border-gray-300 shadow-md">
         <h2 className="text-xl font-medium text-gray-700 mb-4">
           Developer yang Terlibat
         </h2>
@@ -90,7 +60,7 @@ const Page: React.FC = () => {
       </div>
 
       {/* Tanggal Deadline */}
-      <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
+      <div className="mb-8 p-6 bg-white rounded-xl border border-gray-300 shadow-md">
         <h2 className="text-xl font-medium text-gray-700 mb-4">
           Tanggal Deadline
         </h2>

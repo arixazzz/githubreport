@@ -42,11 +42,6 @@ export const laporanColumns: ColumnDef<LaporanResponse>[] = [
     cell: ({ row }) => row.original.name,
   },
   {
-    accessorKey: "nameproject",
-    header: "Nama Project",
-    cell: ({ row }) => row.original.nameproject,
-  },
-  {
     accessorKey: "deskripsi",
     header: "Deskripsi",
     cell: ({ row }) => row.original.deskripsi,

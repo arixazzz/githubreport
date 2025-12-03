@@ -53,18 +53,18 @@ export default function Page() {
             <TitleHeader title="Tambah Project" />
             <div className="mt-3 flex flex-col gap-3">
               <CustomFormInput<any>
-                name="name"
+                name="title"
                 label="Nama"
                 placeholder="Masukkan Nama Project"
               />
               <CustomFormTextArea<any>
-                name="Detail"
+                name="detail"
                 label="Detail Project"
                 placeholder="Masukkan Detail Project"
               />
               <CustomFormMultiSelect
                 label="Developer"
-                name="try"
+                name="developer"
                 options={[
                   {
                     label: "Fajri (FrontEnd Developer)",
@@ -74,12 +74,12 @@ export default function Page() {
                 ]}
               />
               <CustomFormInput<any>
-                name="Tanggal Deadline"
+                name="deadline"
                 label="Tanggal Deadline"
                 placeholder="Masukkan Tanggal Deadline"
               />
               <CustomFormInput<any>
-                name="URL GitHub"
+                name="linkgithub"
                 label="URL GitHub"
                 placeholder="Masukkan URL GitHub"
               />
