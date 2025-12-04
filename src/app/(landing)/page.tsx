@@ -10,18 +10,19 @@ import GuideSection from "@/components/sections/landing/gudeSection";
 import BeautifulAlert from "@/components/sections/landing/beautifulAlert";
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1">
-        <HeroSection />
-        <FeaturesSection />
-        <TestimonialsSection />
-        <CTASection />
-        <BeautifulAlert />
-        <GuideSection />
-      </main>
-      <SiteFooter />
-    </div>
-  );
+  window.location.href = "/login";
+  // return (
+  //   <div className="flex min-h-screen flex-col">
+  //     <SiteHeader />
+  //     <main className="flex-1">
+  //       <HeroSection />
+  //       <FeaturesSection />
+  //       <TestimonialsSection />
+  //       <CTASection />
+  //       <BeautifulAlert />
+  //       <GuideSection />
+  //     </main>
+  //     <SiteFooter />
+  //   </div>
+  // );
 }

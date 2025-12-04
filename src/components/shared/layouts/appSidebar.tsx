@@ -19,22 +19,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navData = getNavData();
   const { permissions, isLoading } = usePermission();
   const { decode } = useGetToken();
+
+  // Default values lebih aman
+  const userRole = decode?.role ? [decode.role] : ["GUEST"];
+  const navItems = navData?.navItems ?? [];
+
   return (
     <Sidebar collapsible="icon" {...props} className="z-20">
-      <SidebarHeader className="p-0 sticky bg-white">
+      <SidebarHeader className="p-0 sticky top-0 bg-white z-10">
         <AppSidebarHeader />
       </SidebarHeader>
+
       <SidebarContent className="bg-white">
-        {navData && (
+        {!isLoading && navItems.length > 0 && (
           <NavItems
-            items={navData.navItems}
-            userRoles={[decode?.role ?? ""]}
+            items={navItems}
+            userRoles={userRole}
             isLoading={isLoading}
             userPermissions={permissions ?? []}
           />
         )}
       </SidebarContent>
+
+      {/* Logout */}
       <NavItemsLogout />
+
+      {/* Optional Rail */}
       <SidebarRail />
     </Sidebar>
   );

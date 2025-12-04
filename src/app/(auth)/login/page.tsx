@@ -24,7 +24,7 @@ export default function LoginPage() {
   const form = useForm<LoginPayload>({
     resolver: zodResolver(loginValidation),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
@@ -35,21 +35,25 @@ export default function LoginPage() {
 
   const loginMutation = useLoginMutation();
 
-  const onSubmit = (data: LoginPayload) => {
+  const onSubmit = async (data: LoginPayload) => {
     console.log("Login data:", data);
-    loginMutation.mutate(data, {
-      onSuccess: async (response) => {
-        Cookie.set("accessToken", response.data.token);
-        // Decode JWT token
-        const decoded: decodedProps = jwtDecode(response.data.token);
-        if (decoded.role.toLowerCase() === "user") {
-          router.push("/profile");
-        } else {
-          router.push("/dashboard");
-        }
-        await ensureWebPushSubscription();
+    const response = await fetch("login/auth", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify(data),
     });
+    const result = await response.json();
+
+    if (result.status === 400) {
+      alert(result.error);
+    }
+
+    if (result.status === 200) {
+      alert(result.error);
+      router.push("/dashboard");
+    }
   };
 
   return (
@@ -67,9 +71,9 @@ export default function LoginPage() {
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="grid gap-4">
                   <CustomFormInput<LoginPayload>
-                    name="email"
-                    label="Email"
-                    placeholder="Login menggunakan Email"
+                    name="username"
+                    label="Username Github"
+                    placeholder="Login menggunakan Username Github"
                     required
                   />
                   <CustomFormInput<LoginPayload>

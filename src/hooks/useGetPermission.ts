@@ -5,14 +5,14 @@ import { useCallback, useMemo } from "react";
 export function usePermission() {
   const { data, isLoading, error } = useGetUserDetail();
 
-  if (error?.status === 401) {
+  if ((error as any)?.status === 401) {
     Cookies.remove("accessToken");
     // ensureWebPushSubscription();
   }
 
   // 1️⃣ memoize permissions array
   const permissions: string[] = useMemo(
-    () => data?.data?.role?.rolePermissions ?? [],
+    () => (data as any)?.data?.role?.rolePermissions ?? [],
     [data]
   );
 

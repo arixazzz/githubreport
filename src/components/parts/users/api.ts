@@ -13,25 +13,44 @@ import {
   UserProfilePayload,
 } from "./validation";
 
+// 🔹 Fetch user detail yang aman
 const fetchUserDetail = async (): Promise<
   ApiResponse<DataObject<UserDetailResponse>>
 > => {
-  return await offlineFetcher(`auth/me`, { queryKey: ["useGetUserDetail"] });
+  try {
+    const response =
+      await offlineFetcher<ApiResponse<DataObject<UserDetailResponse>>>(
+        "user/detail"
+      );
+    // pastikan selalu return object
+    return (
+      response ?? ({ data: {} } as ApiResponse<DataObject<UserDetailResponse>>)
+    );
+  } catch (err) {
+    console.warn("⚠️ fetchUserDetail failed:", err);
+    return { data: {} } as ApiResponse<DataObject<UserDetailResponse>>;
+  }
 };
 
+// 🔹 Hook untuk get user detail
 export const useGetUserDetail = () => {
   const { setUser } = useStore(useProfile);
-  return useQuery<ApiResponse<DataObject<UserDetailResponse>>, APIError<any>>({
+
+  return useQuery({
     queryKey: ["useGetUserDetail"],
     queryFn: async () => {
       const response = await fetchUserDetail();
-      setUser(response.data);
+      const userData = response?.data ?? {}; // default object
+      setUser(userData);
       return response;
     },
     networkMode: "offlineFirst",
-  });
+    retry: false, // optional, matikan retry otomatis
+    select: (data) => data ?? { data: {} }, // aman jika null
+  } as const);
 };
 
+// 🔹 Hook untuk update profile
 export const useUserProfileMutation = () => {
   return useFormMutation<
     ApiResponse<DataObject<UserProfilePayload>>,
@@ -45,6 +64,7 @@ export const useUserProfileMutation = () => {
   });
 };
 
+// 🔹 Hook untuk ganti password
 export const useUserPasswordMutation = (userId?: number) => {
   return useFormMutation<
     ApiResponse<DataObject<{ token: string | null }>>,

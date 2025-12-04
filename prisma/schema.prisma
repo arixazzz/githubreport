@@ -4,12 +4,13 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
   
 model Project {
@@ -22,13 +23,13 @@ model Project {
 
 }
 
-model developer {
+model Developer {
     id       Int    @id @default(autoincrement())
     userId   Int    
     projectId Int   
 }
 
-model user{
+model User{
     id       Int    @id @default(autoincrement())
     nama     String
     usernamegithub String @unique
@@ -37,7 +38,7 @@ model user{
     role     String
 }
 
-model logActivity {
+model LogActivity {
     id        Int      @id @default(autoincrement())
     userId    Int
     activity  String

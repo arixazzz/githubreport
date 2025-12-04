@@ -24,5 +24,6 @@
     "valueClassName",
     "editorClassName",
     "headerClassName"
-  ]
+  ],
+  "prisma.pinToPrisma6": true
 }

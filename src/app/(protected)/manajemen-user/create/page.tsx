@@ -34,8 +34,25 @@ export default function Page() {
     defaultValues: {},
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     console.log("data", data);
+    const response = await fetch("/manajemen-user/api/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const datas = await response.json();
+
+    if (datas.status === 400) {
+      alert(datas.error);
+    }
+
+    if (datas.status === 200) {
+      alert(datas.message);
+      router.push("/manajemen-user");
+    }
   };
 
   return (
@@ -65,17 +82,30 @@ export default function Page() {
                 placeholder="Masukkan Nama User"
               />
               <CustomFormInput<any>
+                name="username"
+                label="Username Github"
+                placeholder="Masukkan Username Github"
+              />
+              <CustomFormInput<any>
                 name="email"
                 label="Email"
                 placeholder="Masukkan Email"
               />
 
-              <CustomFormMultiSelect
-                label="posisi"
-                name="try"
+              <CustomFormInput<any>
+                name="password"
+                label="Password"
+                placeholder="Masukkan Password"
+                type="password"
+              />
+
+              <CustomFormSelect
+                label="Role"
+                name="role"
+                placeholder="Pilih Role"
                 options={[
-                  { label: "FrontEnd Developer", value: "FrontEnd Developer" },
-                  { label: "BacktEnd Developer", value: "BackEnd Developer" },
+                  { label: "User", value: "USER" },
+                  { label: "Admin", value: "ADMIN" },
                 ]}
               />
 

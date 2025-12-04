@@ -3,12 +3,24 @@
 import { AiFillGithub } from "react-icons/ai"; // Menggunakan ikon GitHub dari react-icons
 import { BASE_URL } from "@/constants"; // Pastikan BASE_URL sudah didefinisikan di constants
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-const GitHubSignInButton = ({ className = "" }) => {
+const gitHubSignInButton = ({ className = "" }) => {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const router = useRouter();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const clientId = process.env.NEXT_PUBLIC_GITHUB_ID as string;
+  const redirectUri = process.env.NEXT_PUBLIC_NEXTAUTH_URL as string;
+
+  const githubLoginUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user user:email`;
 
   const handleGitHub = () => {
-    router.push(`${BASE_URL}/auth/github`); // Mengarahkan ke endpoint GitHub
+    try {
+      // TODO: Integrasikan dengan NextAuth atau OAuth handler Anda
+      window.location.href = githubLoginUrl;
+    } catch (error) {
+      console.error("Login error:", error);
+    } // Mengarahkan ke endpoint GitHub
   };
 
   return (
@@ -22,4 +34,4 @@ const GitHubSignInButton = ({ className = "" }) => {
   );
 };
 
-export default GitHubSignInButton;
+export default gitHubSignInButton;

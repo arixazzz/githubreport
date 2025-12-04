@@ -1,16 +1,4 @@
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVerticalIcon } from "lucide-react";
-import Link from "next/link";
-import ModalDelete from "@/components/shared/modalDelete";
-import Image from "next/image";
-import ActionOption from "@/components/table/actionOption";
-import { useActionState } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -26,32 +14,11 @@ export const Modal = ({ isOpen, onClose, children }: any) => {
   );
 };
 
-export const dummyUser: ManajemenUserInterface[] = [
-  {
-    id: "1",
-    nama: "faqih",
-    email: "faqih@gmail.com",
-    role: "Frontend Developer",
-  },
-  {
-    id: "2",
-    nama: "Fajri",
-    email: "fajri@gmail.com",
-    role: "Backend Developer",
-  },
-  {
-    id: "3",
-    nama: "Dini",
-    email: "dini@gmail.com",
-    role: "Frontend Developer",
-  },
-];
-
 export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
   {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => row.original.id,
+    accessorKey: "no",
+    header: "NO.",
+    cell: ({ row }) => row.index + 1, // NOMOR URUT LOOPING
   },
   {
     accessorKey: "nama",
@@ -71,7 +38,12 @@ export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
   {
     accessorKey: "action",
     header: "Aksi",
-    cell: ({ row }) => <EditActionButton row={row} />,
+    cell: ({ row }) => (
+      <div className="flex gap-2">
+        <EditActionButton row={row} />
+        <DeleteActionButton row={row} />
+      </div>
+    ),
   },
 ];
 const EditActionButton = ({ row }: { row: any }) => {
@@ -83,11 +55,30 @@ const EditActionButton = ({ row }: { row: any }) => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Simulate saving the edited data
-    console.log("New Nama Saved:", newNama);
-    console.log("New Email Saved:", newEmail);
-    console.log("New Role Saved:", newRole);
+    // console.log("New Nama Saved:", newNama);
+    // console.log("New Email Saved:", newEmail);
+    // console.log("New Role Saved:", newRole);
+    const updateData = await fetch(
+      `/manajemen-user/api/update/${row.original.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newNama,
+          email: newEmail,
+          role: newRole,
+        }),
+      }
+    );
+
+    if (updateData.status === 200) {
+      alert("Pengguna berhasil diupdate");
+      window.location.reload();
+    }
     setIsModalOpen(false); // Close the modal after saving
   };
 
@@ -159,5 +150,32 @@ const EditActionButton = ({ row }: { row: any }) => {
         </Modal>
       )}
     </>
+  );
+};
+
+const DeleteActionButton = ({ row }: { row: any }) => {
+  const handleDelete = async () => {
+    const confirmDelete = confirm(
+      `Yakin ingin menghapus pengguna ${row.original.nama}?`
+    );
+
+    if (!confirmDelete) return;
+
+    const res = await fetch(`/manajemen-user/api/delete/${row.original.id}`, {
+      method: "DELETE",
+    });
+
+    if (res.status === 200) {
+      alert("Pengguna berhasil dihapus");
+      window.location.reload();
+    } else {
+      alert("Gagal menghapus pengguna");
+    }
+  };
+
+  return (
+    <Button onClick={handleDelete} className="text-red-500">
+      Delete
+    </Button>
   );
 };

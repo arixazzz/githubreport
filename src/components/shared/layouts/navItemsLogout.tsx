@@ -17,12 +17,8 @@ export default function NavItemsLogout() {
       .confirm("Logout", "Yakin ingin keluar", "Logoout")
       .then(async (res) => {
         if (res) {
-          logoutMutation.mutate(undefined, {
-            onSuccess: () => {
-              Cookies.remove("accessToken"); // "token" adalah nama cookies Anda
-              router.push("/login");
-            },
-          });
+          Cookies.remove("accessToken"); // "token" adalah nama cookies Anda
+          router.push("/login");
         }
       });
   };

@@ -1,5 +1,4 @@
-export const isProduction = process.env.NEXT_PUBLIC_MODE === "PRODUCTION";
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     domains: [
@@ -10,19 +9,26 @@ const nextConfig = {
       "picsum.photos",
     ],
   },
+
   compiler: {
-    ...(isProduction && {
-      removeConsole: {
-        exclude: ["error"],
-      },
+    ...(process.env.NEXT_PUBLIC_MODE === "PRODUCTION" && {
+      removeConsole: { exclude: ["error"] },
     }),
   },
-  devIndicators: {
-    position: "bottom-right",
+
+  devIndicators: { position: "bottom-right" },
+
+  // ❗ Disable ALL Turbopack features
+  experimental: {
+    serverMinification: false,
+    ppr: false,
+    webpackBuildWorker: false,
   },
-  // experimental: {
-  //   authInterrupts: true,
-  // },
+
+  // ❗ Paksa gunakan Webpack
+  webpack(config: any) {
+    return config;
+  },
 };
 
 export default nextConfig;

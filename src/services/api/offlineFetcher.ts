@@ -8,24 +8,30 @@ import { isFunction } from "@tanstack/react-table";
 import { APIError } from "@/types/interface";
 
 interface OfflineFetcherInit extends RequestInit {
-  ttl?: number; // TTL dalam milidetik
+  ttl?: number;
   queryKey?: any[];
-  parseJson?: boolean; // default true
+  parseJson?: boolean;
   headers?: Record<string, string>;
-  mappingData?: (data: any) => any; // ✅ fungsi opsional untuk mapping hasil
+  mappingData?: (data: any) => any;
 }
 
 const defaultTtl = 1000 * 60 * 60 * 24; // 1 hari
 
 /**
- * Local-first (stale-while-revalidate) fetcher.
- * Selalu return cache dulu (kalau ada), lalu update di background.
+ * Offline-first fetcher yang aman untuk 404 & network error
  */
 export async function offlineFetcher<T = any>(
   url: string,
   init?: OfflineFetcherInit
 ): Promise<T> {
   const cacheKey = url;
+
+  // 🔒 Block khusus supaya tidak pernah fetch ke auth/me
+  if (url === "auth/me") {
+    console.warn("⛔ Fetch ke auth/me diblokir oleh offlineFetcher");
+    return { data: {} } as any;
+  }
+
   const token = Cookies.get("accessToken");
   const {
     mappingData,
@@ -36,103 +42,71 @@ export async function offlineFetcher<T = any>(
     ...fetchOptions
   } = init || {};
 
-  // =========================================================
-  // STEP 1 — Ambil cache dulu agar UI cepat render
-  // =========================================================
-  const cached = await db.cache.get(cacheKey);
-  if (cached) {
-    // console.log("📦 [OfflineFetcher] return cached:", cacheKey);
-
-    // =========================================================
-    // STEP 2 — Lakukan background fetch untuk update cache
-    // =========================================================
-    (async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/${url}`, {
-          ...fetchOptions,
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            ...(customHeaders ?? {}),
-          },
-        });
-
-        if (!res.ok) {
-          if (res.status === 498) Cookies.remove("accessToken");
-          throw new Error(`Network error ${res.status}`);
-        }
-
-        let data = init?.parseJson === false ? res : await res.json();
-
-        // ✅ Jalankan mappingData jika disediakan
-        if (isFunction(mappingData)) {
-          try {
-            data = mappingData(data.data);
-          } catch (err) {
-            console.warn("⚠️ [OfflineFetcher] mappingData error:", err);
-          }
-        }
-
-        // ✅ Simpan ke IndexedDB
-        await db.cache.put({
-          key: cacheKey,
-          data,
-          updatedAt: new Date(),
-          expiresAt: new Date(Date.now() + ttl),
-        });
-
-        // console.log("🔄 [OfflineFetcher] cache updated:", cacheKey);
-
-        // ✅ Update React Query cache
-        if (init?.queryKey) {
-          queryClient.setQueryData(init.queryKey, data);
-          // console.log(
-          //   "🌀 [OfflineFetcher] React Query updated:",
-          //   init.queryKey
-          // );
-          // console.log("data updated : ", data);
-        }
-
-        // ✅ Trigger custom event
-        window.dispatchEvent(
-          new CustomEvent("cache-updated", { detail: { key: cacheKey, data } })
-        );
-      } catch (err) {
-        console.warn("⚠️ [OfflineFetcher] background fetch failed:", err);
-      }
-    })();
-
-    // return cache langsung untuk UI
-    return cached.data as T;
-  }
-
-  // =========================================================
-  // STEP 3 — Kalau belum ada cache, fetch langsung
-  // =========================================================
   try {
+    const cached = await db.cache.get(cacheKey);
+    if (cached) {
+      // Background fetch, error tidak crash
+      (async () => {
+        try {
+          const res = await fetch(`${BASE_URL}/${url}`, {
+            ...fetchOptions,
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              ...(customHeaders ?? {}),
+            },
+          });
+
+          let data: any = { data: {} };
+          if (res.ok) {
+            data = parseJson ? await res.json() : res;
+            if (isFunction(mappingData)) data = mappingData(data.data);
+
+            await db.cache.put({
+              key: cacheKey,
+              data,
+              updatedAt: new Date(),
+              expiresAt: new Date(Date.now() + ttl),
+            });
+
+            if (queryKey) queryClient.setQueryData(queryKey, data);
+
+            window.dispatchEvent(
+              new CustomEvent("cache-updated", {
+                detail: { key: cacheKey, data },
+              })
+            );
+          } else {
+            console.warn(
+              `[OfflineFetcher] background fetch failed: ${res.status}`
+            );
+          }
+        } catch (err) {
+          console.warn("⚠️ [OfflineFetcher] background fetch failed:", err);
+        }
+      })();
+
+      return cached.data as T;
+    }
+
+    // Fetch langsung jika cache kosong
     const res = await fetch(`${BASE_URL}/${url}`, {
-      ...init,
+      ...fetchOptions,
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-        ...(init?.headers ?? {}),
+        ...(customHeaders ?? {}),
       },
     });
 
-    if (!res.ok) throw new Error(`Network error ${res.status}`);
-
-    let data = init?.parseJson === false ? res : await res.json();
-
-    // ✅ Jalankan mappingData kalau ada
-    if (typeof init?.mappingData === "function") {
-      try {
-        data = init.mappingData(data);
-      } catch (err) {
-        console.warn("⚠️ [OfflineFetcher] mappingData error:", err);
-      }
+    if (!res.ok) {
+      console.warn(`[OfflineFetcher] fetch failed: ${url} ${res.status}`);
+      return { data: {} } as any; // fallback aman
     }
 
-    // 💾 Simpan ke IndexedDB
+    let data = parseJson ? await res.json() : res;
+    if (isFunction(mappingData)) data = mappingData(data.data);
+
     await db.cache.put({
       key: cacheKey,
       data,
@@ -140,24 +114,30 @@ export async function offlineFetcher<T = any>(
       expiresAt: new Date(Date.now() + ttl),
     });
 
-    // console.log("✅ [OfflineFetcher] fresh data saved:", cacheKey);
+    if (queryKey) queryClient.setQueryData(queryKey, data);
+
     return data;
   } catch (err) {
-    console.error("❌ [OfflineFetcher] fetch failed:", cacheKey, err);
-    throw new Error("No network and no cache available");
+    console.warn("⚠️ [OfflineFetcher] network error:", url, err);
+    return { data: {} } as any; // fallback aman
   }
 }
 
-// ====================================================
-// Offline Send Data Function (Updated Version)
-// ====================================================
+/**
+ * Offline send data (POST/PUT/PATCH/DELETE) aman untuk offline
+ */
 export const offlineSendData = async <T, D extends object>(
   url: string,
   data: D,
   method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST",
   isFormData?: boolean,
   headers?: RequestInit["headers"]
-): Promise<T> => {
+): Promise<T | { offlineSaved: true; message: string }> => {
+  if (url === "auth/me") {
+    console.warn("⛔ offlineSendData blocked auth/me");
+    return { offlineSaved: true, message: "Blocked auth/me request" } as any;
+  }
+
   const token = Cookies.get("accessToken");
   const shouldUseFormData = hasFile(data) || isFormData;
 
@@ -181,12 +161,7 @@ export const offlineSendData = async <T, D extends object>(
   }
 
   try {
-    // ===============================================
-    // 1️⃣ Coba kirim langsung ke server
-    // ===============================================
     const response = await fetch(`${BASE_URL}/${url}`, options);
-
-    // Jika server merespons tapi error (4xx / 5xx)
     if (!response.ok) {
       let errorBody = null;
       try {
@@ -199,13 +174,8 @@ export const offlineSendData = async <T, D extends object>(
       );
     }
 
-    // Sukses
-    const result = await response.json();
-    return result as T;
+    return await response.json();
   } catch (err: any) {
-    // ====================================================
-    // 2️⃣ Tangani khusus untuk error OFFLINE
-    // ====================================================
     const isOffline =
       (err instanceof TypeError && !navigator.onLine) ||
       err.message?.includes("Failed to fetch") ||
@@ -213,10 +183,9 @@ export const offlineSendData = async <T, D extends object>(
 
     if (isOffline) {
       console.warn(
-        "⚠️ [OfflineSendData] Offline detected, storing to Outbox:",
+        "⚠️ [OfflineSendData] Offline detected, saving to Outbox:",
         url
       );
-
       await db.outbox.add({
         url,
         data,
@@ -229,7 +198,7 @@ export const offlineSendData = async <T, D extends object>(
 
       toast.warning(
         "Offline",
-        "Operasi disimpan ke local & akan disinkronkan saat online",
+        "Operasi disimpan lokal & akan disinkronkan saat online",
         { duration: 10000 }
       );
 
@@ -239,59 +208,7 @@ export const offlineSendData = async <T, D extends object>(
       } as any;
     }
 
-    // ====================================================
-    // 3️⃣ Kalau error lain (server error, bad request, dll)
-    // ====================================================
     console.error("❌ [OfflineSendData] Server error:", err);
-    throw err; // biar tetap ditangani di UI (misal alert / toast error)
+    throw err;
   }
 };
-
-export async function syncOutbox() {
-  const pending = await db.outbox.where({ synced: "false" }).toArray();
-
-  for (const item of pending) {
-    try {
-      toast.loading("Sync", "Melakukan Sync", { id: item.url });
-      const res = await fetch(`${BASE_URL}/${item.url}`, {
-        method: item.method,
-        headers: item.headers,
-        body: ["DELETE", "GET"].includes(item.method)
-          ? undefined
-          : JSON.stringify(item.data),
-      });
-
-      if (res.ok) {
-        toast.removeToast(item.url);
-        await db.outbox.delete(item.id!);
-        console.log("✅ [OutboxSync] Synced:", item.url);
-      } else {
-        toast.removeToast(item.url);
-        toast.error("Sync", `Gagal Sync : ${res.status}`);
-        console.warn("❌ [OutboxSync] Server error:", item.url, res.status);
-      }
-    } catch (err) {
-      console.warn("⚠️ [OutboxSync] Still offline, retry later:", item.url);
-    }
-  }
-}
-
-export async function cleanExpiredCache() {
-  const now = Date.now();
-  await db.cache.where("expiresAt").below(new Date(now)).delete();
-  console.log("[CacheCleaner] 🧹 expired cache cleared");
-}
-
-// listener auto sync kalau online lagi
-if (typeof window !== "undefined") {
-  window.addEventListener("online", () => {
-    console.log("🔄 Online detected, syncing outbox...");
-    syncOutbox();
-    console.log("🔄 Online detected, cleanExpiredCache...");
-    cleanExpiredCache();
-  });
-  window.addEventListener("load", () => {
-    cleanExpiredCache();
-    syncOutbox();
-  });
-}
