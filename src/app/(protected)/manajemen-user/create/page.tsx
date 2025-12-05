@@ -36,7 +36,7 @@ export default function Page() {
 
   const onSubmit = async (data: any) => {
     console.log("data", data);
-    const response = await fetch("/manajemen-user/api/create", {
+    const response = await fetch("/api/users/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

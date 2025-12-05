@@ -60,20 +60,17 @@ const EditActionButton = ({ row }: { row: any }) => {
     // console.log("New Nama Saved:", newNama);
     // console.log("New Email Saved:", newEmail);
     // console.log("New Role Saved:", newRole);
-    const updateData = await fetch(
-      `/manajemen-user/api/update/${row.original.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newNama,
-          email: newEmail,
-          role: newRole,
-        }),
-      }
-    );
+    const updateData = await fetch(`/api/users/update/${row.original.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: newNama,
+        email: newEmail,
+        role: newRole,
+      }),
+    });
 
     if (updateData.status === 200) {
       alert("Pengguna berhasil diupdate");
@@ -161,7 +158,7 @@ const DeleteActionButton = ({ row }: { row: any }) => {
 
     if (!confirmDelete) return;
 
-    const res = await fetch(`/manajemen-user/api/delete/${row.original.id}`, {
+    const res = await fetch(`/api/users/delete/${row.original.id}`, {
       method: "DELETE",
     });
 

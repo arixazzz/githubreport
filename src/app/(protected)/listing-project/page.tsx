@@ -7,14 +7,36 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+interface Project {
+  id: number; // id bertipe number sesuai dengan tipe di schema Prisma
+  title: string;
+  detail: string;
+  deadline: string; // date di Prisma dapat direpresentasikan sebagai string di TypeScript
+  stack: string;
+  linkgithub: string;
+}
 
 const Page = () => {
-  const projects = new Array(6).fill({
-    name: "PPDB SMA Perintis 2 Bandar Lampung",
-    description:
-      "Aplikasi SIPPP PUPR (Sistem Informasi Pelaksanaan, Pengawasan, dan Pelaporan) adalah sebuah platform yang dikembangkan untuk Dinas ........",
-  });
+  const [data, setData] = useState<Project[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/api/project/get", {
+          method: "GET",
+        });
+
+        const json = await res.json();
+        setData(json.project || []);
+      } catch (error) {
+        console.error("Gagal fetch data user:", error);
+      }
+    }
+
+    load();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -28,14 +50,23 @@ const Page = () => {
     setPage(page - 1);
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter projects based on search query
+  const filteredProjects = data.filter((project) =>
+    project.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Get the current projects based on pagination
   const currentProjects = filteredProjects.slice(
     (page - 1) * itemsPerPage,
     page * itemsPerPage
   );
+
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length > maxLength) {
+      return text.slice(0, maxLength) + "..."; // Potong dan tambahkan "..."
+    }
+    return text;
+  };
 
   return (
     <Card>
@@ -62,19 +93,22 @@ const Page = () => {
         </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {currentProjects.map((project, index) => (
+        {currentProjects.map((project) => (
           <div
-            key={index}
+            key={project.id}
             className="flex flex-col gap-3 p-4 border border-gray-200 rounded-lg shadow-sm"
           >
-            <h3 className="font-bold text-lg">{project.name}</h3>
-            <p className="text-sm text-gray-600">{project.description}</p>
+            <h3 className="font-bold text-lg">{project.title}</h3>
+            <p className="text-sm text-gray-600">
+              {truncateText(project.detail, 70)}
+            </p>
             <div className="flex gap-2 mt-3">
-              <Link href={"/listing-project/detail/2"}>
+              <Link href={`/listing-project/detail/${project.id}`}>
                 <Button className="rounded-full bg-blue-500 text-white">
                   Detail
                 </Button>
               </Link>
+
               <Link href={"/listing-project/laporan/2"}>
                 <Button className="rounded-full bg-gray-500 text-white">
                   Laporan

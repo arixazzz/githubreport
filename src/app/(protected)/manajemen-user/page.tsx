@@ -22,7 +22,7 @@ export default function ProductPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/manajemen-user/api/get", {
+        const res = await fetch("/api/users/get", {
           method: "GET",
         });
 
