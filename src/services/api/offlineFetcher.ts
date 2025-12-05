@@ -1,3 +1,4 @@
+"use server";
 import { queryClient } from "@/app/QueryProvider";
 import { BASE_URL } from "@/constants";
 import { db } from "@/db/db";

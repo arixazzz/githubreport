@@ -17,18 +17,6 @@ const nextConfig = {
   },
 
   devIndicators: { position: "bottom-right" },
-
-  // ❗ Disable ALL Turbopack features
-  experimental: {
-    serverMinification: false,
-    ppr: false,
-    webpackBuildWorker: false,
-  },
-
-  // ❗ Paksa gunakan Webpack
-  webpack(config: any) {
-    return config;
-  },
 };
 
 export default nextConfig;

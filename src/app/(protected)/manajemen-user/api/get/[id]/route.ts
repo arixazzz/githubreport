@@ -2,9 +2,12 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const id = req.nextUrl.searchParams.get("id");
+    const { id } = params;
 
     const user = await prisma.user.findUnique({ where: { id: Number(id) } });
     return NextResponse.json({ user, status: 200 }, { status: 200 });

@@ -31,6 +31,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   // 🚫 Sudah login tapi akses /login
   if (token && pathname === "/login") {
     return NextResponse.redirect(new URL("/dashboard", request.url));

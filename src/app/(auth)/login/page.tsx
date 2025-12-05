@@ -5,17 +5,12 @@ import {
   LoginPayload,
   loginValidation,
 } from "@/components/parts/login/validation";
-import { ensureWebPushSubscription } from "@/components/parts/webpush/api";
-import ForgotPassword from "@/components/sections/login/forgotPassword";
 import { CustomFormInput } from "@/components/shared/forms/customFormInput";
-import GitHubSignInButton from "@/components/shared/gitHubSignInButton";
+import { GitHubSignInButton } from "@/components/shared/GitHubSignInButton";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import useShowErrors from "@/hooks/useShowErrors";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Cookie from "js-cookie";
-import { jwtDecode } from "jwt-decode";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
@@ -37,7 +32,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginPayload) => {
     console.log("Login data:", data);
-    const response = await fetch("login/auth", {
+    const response = await fetch("/api/auth", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

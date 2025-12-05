@@ -1,3 +1,5 @@
+"use client";
+
 import { toast } from "@/lib/myToast";
 import { useEffect } from "react";
 

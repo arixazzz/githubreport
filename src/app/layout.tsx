@@ -1,7 +1,7 @@
-import { Filter, FilterRegistryProvider } from "@/components/filters";
+import { FilterRegistryProvider } from "@/components/filters";
 import { MyAlertDialog } from "@/components/shared/customAlertDialog";
 import NetInfo from "@/components/shared/netInfo";
-import ThemeProvider from "@/components/shared/themeProvider";
+import ServiceWorkerWarp from "@/components/shared/serviceWorkerWarp";
 import { ToastProvider } from "@/components/shared/toast/toastComponent";
 import { ImageProvider } from "@/image";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ import NextTopLoader from "nextjs-toploader";
 import { Suspense } from "react";
 import "./globals.css";
 import QueryProvider from "./QueryProvider";
-import ServiceWorkerWarp from "@/components/shared/serviceWorkerWarp";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -56,19 +55,17 @@ export default async function RootLayout(
         </Script>
       </head>
       <body className={cn(poppins.className, "scroll-smooth")}>
-        <ThemeProvider>
-          <QueryProvider>
-            <NextTopLoader showSpinner={false} color="#00218F" />
-            <FilterRegistryProvider>
-              <Suspense>
-                <ServiceWorkerWarp>
-                  <ImageProvider>{children}</ImageProvider>
-                </ServiceWorkerWarp>
-                <NetInfo />
-              </Suspense>
-            </FilterRegistryProvider>
-          </QueryProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <NextTopLoader showSpinner={false} color="#00218F" />
+          <FilterRegistryProvider>
+            <Suspense>
+              <ServiceWorkerWarp>
+                <ImageProvider>{children}</ImageProvider>
+              </ServiceWorkerWarp>
+              <NetInfo />
+            </Suspense>
+          </FilterRegistryProvider>
+        </QueryProvider>
         {/* GTM NoScript */}
         <noscript>
           <iframe

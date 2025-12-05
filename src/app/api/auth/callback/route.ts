@@ -1,8 +1,7 @@
-export const runtime = "nodejs";
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
 interface GitHubTokenResponse {
   access_token: string;
@@ -70,9 +69,9 @@ export async function GET(req: NextRequest) {
   if (!existingUser) {
     await prisma.user.create({
       data: {
-        usernamegithub: user.login ?? "contoh",
-        nama: user?.name ?? "contoh",
-        email: user?.email ?? "",
+        usernamegithub: user.login,
+        nama: user?.name ?? user.login,
+        email: user?.email ?? null,
         password: "password",
         role: "USER",
       },
@@ -98,7 +97,5 @@ export async function GET(req: NextRequest) {
     value: token,
   });
 
-  // localStorage.setItem("githubToken", accessToken);
-  // localStorage.setItem("token", btoa(JSON.stringify(user)));
   return NextResponse.redirect(new URL("/dashboard", req.url));
 }

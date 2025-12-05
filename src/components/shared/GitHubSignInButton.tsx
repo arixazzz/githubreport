@@ -5,7 +5,7 @@ import { BASE_URL } from "@/constants"; // Pastikan BASE_URL sudah didefinisikan
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const gitHubSignInButton = ({ className = "" }) => {
+export const GitHubSignInButton = ({ className = "" }) => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const router = useRouter();
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -33,5 +33,3 @@ const gitHubSignInButton = ({ className = "" }) => {
     </button>
   );
 };
-
-export default gitHubSignInButton;

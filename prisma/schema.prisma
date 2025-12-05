@@ -34,7 +34,7 @@ model User{
     nama     String
     usernamegithub String @unique
     password String
-    email    String @unique
+    email    String?  @unique
     role     String
 }
 
