@@ -1,124 +1,131 @@
 "use client";
 
-import {
-  dummyLaporan,
-  laporanColumns,
-} from "@/components/parts/laporan/column";
 import { BreadcrumbSetItem } from "@/components/shared/layouts/myBreadcrumb";
+import { laporanColumns } from "@/components/parts/laporan/column"; // assuming column definitions are here
 import TitleHeader from "@/components/shared/title";
 import DataTable from "@/components/table/dataTable";
 import { Button } from "@/components/ui/button";
 import { FiFilter, FiChevronDown } from "react-icons/fi";
 import { Card } from "@/components/ui/card";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TableProvider } from "@/components/table";
 import TableBar from "@/components/table/tableBar";
 
-const Page = () => {
-  type Row = {
-    nama: string;
-    tanggal: string;
-    repositoriDeveloper: string;
-  };
-
-  const [data, setData] = useState<Row[]>([
-    {
-      nama: "Dini",
-      tanggal: "25 September 2025",
-      repositoriDeveloper:
-        "Update documentation and README with installation guide",
-    },
-    {
-      nama: "Fajri",
-      tanggal: "25 September 2025",
-      repositoriDeveloper: "Add user authentication system with JWT tokens",
-    },
-    {
-      nama: "Yeni",
-      tanggal: "24 September 2025",
-      repositoriDeveloper:
-        "Fix bug in repository listing and improve performance",
-    },
-  ]);
-
-  const [role, setRole] = useState<"admin" | "user">("admin");
-
+const Page = ({ params }: { params: { id: string } }) => {
+  const { id } = params;
+  const [data, setData] = useState<ReportResponse[]>([]); // Reports data
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [newData, setNewData] = useState<Row | null>(null);
+  const [newDeskripsi, setNewDeskripsi] = useState<string>("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterType, setFilterType] = useState<
     "harian" | "mingguan" | "bulanan" | null
   >(null);
+  const [load, setLoad] = useState<boolean>(true);
+  const [err, setErr] = useState<string | null>(null);
 
-  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setShowFilter(false);
+  // Fetch report data from API
+  useEffect(() => {
+    if (!id) {
+      setErr("Project ID not found");
+      setLoad(false);
+      return;
+    }
+    async function loadData() {
+      try {
+        const res = await fetch(`/api/report/get/${id}`, { method: "GET" });
+        const result = await res.json();
+        setData(result.reports || []);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [wrapperRef]);
+    loadData();
+  }, []);
 
   const handleEdit = (index: number) => {
     setIsEditing(true);
     setEditIndex(index);
-    setNewData(data[index]);
+    setNewDeskripsi(data[index].conclusion); // Set initial value for editing
   };
 
   const handleSave = () => {
-    if (editIndex !== null && newData) {
+    if (editIndex !== null && newDeskripsi) {
       const updatedData = [...data];
-      updatedData[editIndex] = newData;
+      updatedData[editIndex].conclusion = newDeskripsi; // Update the conclusion
       setData(updatedData);
       setIsEditing(false);
       setEditIndex(null);
-      setNewData(null);
+      setNewDeskripsi("");
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditIndex(null);
-    setNewData(null);
+    setNewDeskripsi("");
   };
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <Card>
       <BreadcrumbSetItem
         items={[
           {
-            title: "Listing Project",
+            title: "Reports",
           },
           {
-            title: "Listing Project",
+            title: "Project Reports",
           },
         ]}
       />
-
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <TitleHeader title="Laporan Project" />
         </div>
       </div>
 
-      <TableProvider>
-        <TableBar filterItems={["date"]} />
-        <div className="mt-4">
-          <DataTable
-            columns={laporanColumns}
-            data={dummyLaporan}
-            displayItems
-            displayPageSize
-          />
-        </div>
-      </TableProvider>
+      <div className="mt-4">
+        <Button
+          className="w-full py-2 px-4 rounded-full"
+          onClick={() => alert("Generate Report clicked")}
+        >
+          Generate Report
+        </Button>
+      </div>
+
+      <div className="mt-4">
+        <DataTable columns={laporanColumns} data={data} />
+      </div>
+
+      {/* Modal for editing description */}
+      {/* {isEditing && (
+        <Modal isOpen={isEditing} onClose={handleCancel}>
+          <div className="p-4">
+            <h3 className="text-xl mb-4">Edit Deskripsi</h3>
+            <textarea
+              value={newDeskripsi}
+              onChange={(e) => setNewDeskripsi(e.target.value)}
+              className="w-full p-2 border rounded"
+              rows={4}
+            />
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleCancel} className="mr-2">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="bg-blue-500 text-white">
+                Save
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )} */}
     </Card>
   );
 };

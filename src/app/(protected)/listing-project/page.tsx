@@ -109,7 +109,7 @@ const Page = () => {
                 </Button>
               </Link>
 
-              <Link href={"/listing-project/laporan/2"}>
+              <Link href={`/listing-project/laporan/${project.id}`}>
                 <Button className="rounded-full bg-gray-500 text-white">
                   Laporan
                 </Button>

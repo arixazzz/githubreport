@@ -15,41 +15,64 @@ export const Modal = ({ isOpen, onClose, children }: any) => {
 };
 import { Button } from "@/components/ui/button"; // Asumsikan kamu punya komponen button
 
-export const dummyLaporan: LaporanResponse[] = [
-  {
-    id: "1",
-    date: "2023-10-01",
-    name: "Benry",
-    nameproject: "Project A",
-    deskripsi: "Deskripsi singkat tentang Laporan Proyek A",
-  },
-];
-
-export const laporanColumns: ColumnDef<LaporanResponse>[] = [
+export const laporanColumns: ColumnDef<ReportResponse>[] = [
   {
     accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => row.original.id,
+    header: "No",
+    cell: ({ row, table }) => {
+      // Get the index of the row in the current page
+      const pageRows = table.getRowModel().rows;
+      const idxInPage = pageRows.findIndex((r) => r.id === row.id);
+      const safeIdx = idxInPage >= 0 ? idxInPage : 0;
+
+      // Get the current page index
+      const meta = table.options.meta as
+        | {
+            serverPageIndex?: number;
+            serverPageSize?: number;
+          }
+        | undefined;
+
+      const pageIndex =
+        typeof meta?.serverPageIndex === "number"
+          ? meta.serverPageIndex
+          : table.getState().pagination.pageIndex;
+
+      const pageSize =
+        typeof meta?.serverPageSize === "number"
+          ? meta.serverPageSize
+          : table.getState().pagination.pageSize;
+
+      // Calculate the index: (pageIndex * pageSize) + row index
+      return pageIndex * pageSize + safeIdx + 1;
+    },
   },
   {
     accessorKey: "date",
     header: "Tanggal",
-    cell: ({ row }) => row.original.date,
+    cell: ({ row }) => {
+      // Format the timestamp to a readable date in "id-ID" locale
+      return new Date(row.original.timestamp).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+    },
   },
   {
-    accessorKey: "name",
-    header: "Nama",
-    cell: ({ row }) => row.original.name,
+    accessorKey: "usernamegithub",
+    header: "Username",
+    cell: ({ row }) => row.original.user.usernamegithub,
   },
   {
     accessorKey: "nameproject",
     header: "Nama Project",
-    cell: ({ row }) => row.original.nameproject,
+    cell: ({ row }) => row.original.project.title,
   },
   {
     accessorKey: "deskripsi",
     header: "Deskripsi",
-    cell: ({ row }) => row.original.deskripsi,
+    cell: ({ row }) => row.original.conclusion,
   },
   {
     accessorKey: "action",

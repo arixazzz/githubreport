@@ -22,6 +22,8 @@ model Project {
 
   // Many-to-many relationship with User through Developer model
   developers  Developer[] @relation("ProjectDevelopers")
+
+  reports Report[]
 }
 
 model Developer {
@@ -47,6 +49,8 @@ model User {
   projects        Developer[] @relation("ProjectDevelopers")
 
   logActivities LogActivity[]
+
+  reports Report[]
 }
 
 model LogActivity {
@@ -58,3 +62,14 @@ model LogActivity {
   user      User     @relation(fields: [userId], references: [id])  // Establish the relation to the User model
 }
 
+model Report {
+  id            Int      @id @default(autoincrement())
+  projectId     Int      // Reference to the associated project
+  userId        Int      // Reference to the user who generated the report
+  conclusion    String   // Generated summary or conclusion from GroQ
+  timestamp     DateTime @default(now())  // Timestamp of when the report was created
+  commitRange   String   // A description of the commit range (e.g., "Last 30 commits")
+
+  project       Project  @relation(fields: [projectId], references: [id])  // Relate to Project model
+  user          User     @relation(fields: [userId], references: [id])     // Relate to User model
+}
