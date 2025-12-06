@@ -14,7 +14,7 @@ export default function NavItemsLogout() {
 
   const logout = () => {
     myAlert
-      .confirm("Logout", "Yakin ingin keluar", "Logoout")
+      .confirm("Keluar", "Yakin ingin keluar", "keluar")
       .then(async (res) => {
         if (res) {
           Cookies.remove("accessToken"); // "token" adalah nama cookies Anda

@@ -31,8 +31,13 @@ export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
     cell: ({ row }) => row.original.email,
   },
   {
+    accessorKey: "position",
+    header: "Jabatan",
+    cell: ({ row }) => row.original.position,
+  },
+  {
     accessorKey: "role",
-    header: "Role",
+    header: "Peran",
     cell: ({ row }) => row.original.role,
   },
   {
@@ -50,24 +55,21 @@ const EditActionButton = ({ row }: { row: any }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newNama, setNewNama] = useState(row.original.nama);
   const [newEmail, setNewEmail] = useState(row.original.email);
+  const [newPosition, setNewPosition] = useState(row.original.position);
   const [newRole, setNewRole] = useState(row.original.role);
-
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   const handleSave = async () => {
-    // Simulate saving the edited data
-    // console.log("New Nama Saved:", newNama);
-    // console.log("New Email Saved:", newEmail);
-    // console.log("New Role Saved:", newRole);
     const updateData = await fetch(`/api/users/update/${row.original.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: newNama,
+        nama: newNama,
         email: newEmail,
+        position: newPosition,
         role: newRole,
       }),
     });
@@ -122,10 +124,25 @@ const EditActionButton = ({ row }: { row: any }) => {
             </div>
             <div className="mb-4">
               <label
+                htmlFor="position"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Jabatan
+              </label>
+              <input
+                id="position"
+                value={newPosition}
+                onChange={(e) => setNewPosition(e.target.value)}
+                className="w-full p-2 border rounded"
+                type="text"
+              />
+            </div>
+            <div className="mb-4">
+              <label
                 htmlFor="role"
                 className="block text-sm font-medium text-gray-700"
               >
-                Role
+                Peran
               </label>
               <input
                 id="role"

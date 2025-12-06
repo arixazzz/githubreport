@@ -14,6 +14,7 @@ import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { CustomFormMultiSelect } from "@/components/shared/forms/customFormMultipleSelect";
+import { useEffect, useState } from "react";
 
 export const access: AccessRule = {
   permissions: [""], // optional overide role jika ada permission
@@ -23,14 +24,61 @@ export const access: AccessRule = {
 export default function Page() {
   const router = useRouter();
   const form = useForm<any>({
-    // resolver: zodResolver()// resolver,
-    defaultValues: {},
+    defaultValues: {
+      deadline: "",
+      developers: [], // Default empty array for developers
+    },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("data", data);
-  };
+  const [users, setUsers] = useState<any[]>([]); // Users state
+  const [loading, setLoading] = useState<boolean>(true); // Loading state for users
 
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/api/users/get", {
+          method: "GET",
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          setUsers(json.users || []);
+        } else {
+          throw new Error("Failed to fetch users");
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  const onSubmit = async (data: any) => {
+    console.log("Submitted data:", data);
+    try {
+      const response = await fetch("/api/project/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        alert(result.message);
+        router.push("/listing-project");
+      } else {
+        alert(result.error || "Something went wrong");
+      }
+    } catch (error) {
+      console.error("Error submitting data:", error);
+    }
+  };
   return (
     <Card>
       <BreadcrumbSetItem
@@ -53,35 +101,47 @@ export default function Page() {
             <TitleHeader title="Tambah Project" />
             <div className="mt-3 flex flex-col gap-3">
               <CustomFormInput<any>
-                name="name"
+                name="title"
                 label="Nama"
                 placeholder="Masukkan Nama Project"
               />
               <CustomFormTextArea<any>
-                name="Detail"
+                name="detail"
                 label="Detail Project"
                 placeholder="Masukkan Detail Project"
               />
               <CustomFormMultiSelect
                 label="Developer"
-                name="try"
-                options={[
-                  {
-                    label: "Fajri (FrontEnd Developer)",
-                    value: "FAjri (FrontEnd Developer)",
-                  },
-                  { label: "BacktEnd Developer", value: "BackEnd Developer" },
-                ]}
+                name="developers"
+                options={
+                  users.length > 0
+                    ? users.map((user) => ({
+                        label: `${user.nama} (${user.position})`,
+                        value: user.id,
+                      }))
+                    : [
+                        {
+                          label: "No developers available",
+                          value: "",
+                        },
+                      ]
+                }
               />
               <CustomFormInput<any>
-                name="Tanggal Deadline"
+                name="deadline"
                 label="Tanggal Deadline"
                 placeholder="Masukkan Tanggal Deadline"
+                type="date"
               />
               <CustomFormInput<any>
-                name="URL GitHub"
+                name="linkgithub"
                 label="URL GitHub"
                 placeholder="Masukkan URL GitHub"
+              />
+              <CustomFormInput<any>
+                name="stack"
+                label="Stack"
+                placeholder="Masukkan Stack (Bahasa Pemrograman Yang Digunakan)"
               />
             </div>
             <div className="flex gap-x-4 justify-end mt-10">

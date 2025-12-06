@@ -99,6 +99,12 @@ export default function Page() {
                 type="password"
               />
 
+              <CustomFormInput<any>
+                name="position"
+                label="Position"
+                placeholder="Masukkan Position"
+              />
+
               <CustomFormSelect
                 label="Role"
                 name="role"

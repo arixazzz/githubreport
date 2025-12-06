@@ -11,34 +11,35 @@ CREATE TABLE "Project" (
 );
 
 -- CreateTable
-CREATE TABLE "developer" (
+CREATE TABLE "Developer" (
     "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
     "projectId" INTEGER NOT NULL,
 
-    CONSTRAINT "developer_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Developer_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "user" (
+CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "nama" TEXT NOT NULL,
     "usernamegithub" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "password" TEXT,
+    "email" TEXT,
     "role" TEXT NOT NULL,
+    "position" TEXT,
 
-    CONSTRAINT "user_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "logActivity" (
+CREATE TABLE "LogActivity" (
     "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
     "activity" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "logActivity_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "LogActivity_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -48,7 +49,13 @@ CREATE UNIQUE INDEX "Project_detail_key" ON "Project"("detail");
 CREATE UNIQUE INDEX "Project_linkgithub_key" ON "Project"("linkgithub");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_usernamegithub_key" ON "user"("usernamegithub");
+CREATE UNIQUE INDEX "User_usernamegithub_key" ON "User"("usernamegithub");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- AddForeignKey
+ALTER TABLE "Developer" ADD CONSTRAINT "Developer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Developer" ADD CONSTRAINT "Developer_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

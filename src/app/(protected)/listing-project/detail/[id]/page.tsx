@@ -192,7 +192,14 @@ interface Project {
   deadline: string;
   stack: string;
   linkgithub: string;
-  // developers: string[]; // Developers are an array of strings
+  developers: {
+    user: {
+      nama: string;
+      usernamegithub: string;
+      role: string;
+      position: string;
+    };
+  }[]; // Updated to include developer details
 }
 
 const Page = ({ params }: { params: { id: string } }) => {
@@ -278,16 +285,19 @@ const Page = ({ params }: { params: { id: string } }) => {
       </div>
 
       {/* Developer yang Terlibat */}
-      {/* <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
-        <h2 className="text-xl font-medium text-gray-700 mb-4">Developer yang Terlibat</h2>
+      {/* Developer yang Terlibat */}
+      <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
+        <h2 className="text-xl font-medium text-gray-700 mb-4">
+          Developer yang Terlibat
+        </h2>
         <ul className="list-disc pl-5 space-y-2">
           {data.developers.map((developer, index) => (
             <li key={index} className="text-sm text-gray-600">
-              {developer}
+              <strong>{developer.user.nama}</strong> ({developer.user.position})
             </li>
           ))}
         </ul>
-      </div> */}
+      </div>
 
       {/* Tanggal Deadline */}
       <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
@@ -295,6 +305,11 @@ const Page = ({ params }: { params: { id: string } }) => {
           Tanggal Deadline
         </h2>
         <p className="text-sm text-gray-600">{formattedDeadline}</p>
+      </div>
+
+      <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
+        <h2 className="text-xl font-medium text-gray-700 mb-4">Stack</h2>
+        <p className="text-sm text-gray-600">{data.stack}</p>
       </div>
 
       <Link

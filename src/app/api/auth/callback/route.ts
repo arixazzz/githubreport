@@ -17,6 +17,13 @@ interface GitHubUser {
   email: string;
 }
 
+interface JwtPayloadInterface {
+  userId: number;
+  email: string;
+  name: string;
+  role: "USER" | "ADMIN";
+}
+
 export const generateAccesToken = function (
   payload: JwtPayloadInterface,
   secretToken: string,
@@ -25,6 +32,8 @@ export const generateAccesToken = function (
   return jwt.sign(payload, secretToken, { expiresIn });
 };
 
+export const runtime = "nodejs";
+
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
 
@@ -32,6 +41,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Code not found" }, { status: 400 });
   }
 
+  // Get the GitHub token using the code
   const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: {
@@ -48,6 +58,7 @@ export async function GET(req: NextRequest) {
   const tokenData = (await tokenRes.json()) as GitHubTokenResponse;
   const accessToken = tokenData.access_token;
 
+  // Fetch the GitHub user data
   const userRes = await fetch("https://api.github.com/user", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -57,45 +68,60 @@ export async function GET(req: NextRequest) {
 
   const user = (await userRes.json()) as GitHubUser;
 
+  // Save GitHub token in cookies
   (await cookies()).set({
     name: "githubToken",
     value: accessToken,
   });
 
-  const existingUser = await prisma.user.findFirst({
+  // Check if the user already exists in the database
+  let existingUser = await prisma.user.findFirst({
     where: { usernamegithub: user.login },
   });
 
   if (!existingUser) {
-    await prisma.user.create({
+    // If the user doesn't exist, create a new user
+    existingUser = await prisma.user.create({
       data: {
         usernamegithub: user.login,
         nama: user?.name ?? user.login,
         email: user?.email ?? null,
-        password: "password",
+        password: "password", // Set a default password or ask the user to change it later
         role: "USER",
       },
     });
   }
 
+  // Prepare JWT payload
   const tokenPayload: JwtPayloadInterface = {
-    userId: Number(existingUser?.id),
-    email: existingUser?.email as string,
-    name: existingUser?.nama as string,
-    role: existingUser?.role as "USER" | "ADMIN",
+    userId: existingUser.id, // Use the correct user ID
+    email: existingUser.email as string,
+    name: existingUser.nama as string,
+    role: existingUser.role as "USER" | "ADMIN",
   };
 
+  // Generate JWT token
   const secretToken = process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ?? "";
   const token = generateAccesToken(
     tokenPayload,
     String(secretToken),
-    3600 * 24
-  ); // 1 day
+    3600 * 24 // 1 day expiration
+  );
 
+  // Save the JWT token in cookies
   (await cookies()).set({
     name: "accessToken",
     value: token,
   });
 
+  // Log the activity (successful login)
+  await prisma.logActivity.create({
+    data: {
+      userId: existingUser.id, // Log the user ID
+      activity: `User ${user.login} logged in successfully`, // Activity description
+    },
+  });
+
+  // Redirect the user to the dashboard
   return NextResponse.redirect(new URL("/dashboard", req.url));
 }

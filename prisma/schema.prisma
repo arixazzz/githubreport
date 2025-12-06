@@ -12,35 +12,49 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
-  
 model Project {
-  id                    Int       @id @default(autoincrement())
-  title                  String
-  detail                String    @unique
-  deadline       DateTime
-  stack          String
-  linkgithub    String @unique
+  id          Int       @id @default(autoincrement())
+  title       String
+  detail      String    @unique
+  deadline    DateTime
+  stack       String
+  linkgithub  String    @unique
 
+  // Many-to-many relationship with User through Developer model
+  developers  Developer[] @relation("ProjectDevelopers")
 }
 
 model Developer {
-    id       Int    @id @default(autoincrement())
-    userId   Int    
-    projectId Int   
+  id         Int    @id @default(autoincrement())
+  userId     Int
+  projectId  Int
+
+  // Define explicit relations to User and Project
+  user       User   @relation("ProjectDevelopers", fields: [userId], references: [id])
+  project    Project @relation("ProjectDevelopers", fields: [projectId], references: [id])
 }
 
-model User{
-    id       Int    @id @default(autoincrement())
-    nama     String
-    usernamegithub String @unique
-    password String
-    email    String?  @unique
-    role     String
+model User {
+  id              Int       @id @default(autoincrement())
+  nama            String
+  usernamegithub  String    @unique
+  password        String?
+  email           String?   @unique
+  role            String
+  position        String?
+
+  // Many-to-many relationship with Project through Developer model
+  projects        Developer[] @relation("ProjectDevelopers")
+
+  logActivities LogActivity[]
 }
 
 model LogActivity {
-    id        Int      @id @default(autoincrement())
-    userId    Int
-    activity  String
-    timestamp DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int      // This is to reference the user performing the action
+  activity  String
+  timestamp DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])  // Establish the relation to the User model
 }
+
