@@ -80,7 +80,6 @@ const Page = ({ params }: { params: { id: string } }) => {
 
     loadReports();
   }, [id]);
-
   // ------------------------------------
   // LOAD GITHUB TOKEN
   // ------------------------------------
@@ -109,15 +108,18 @@ const Page = ({ params }: { params: { id: string } }) => {
       if (!githubToken) throw new Error("Github token tidak ditemukan");
 
       const repoUrl = project.linkgithub;
+      const splitRepo = repoUrl.split("/");
+      const fixReportUrl = `${splitRepo[0]}//api.${splitRepo[2]}/repos/${splitRepo[3]}/${splitRepo[4]}`;
 
-      if (!repoUrl.includes("https://api.github.com/repos")) {
+      if (!fixReportUrl.includes("https://api.github.com")) {
         throw new Error(
           "linkgithub harus berupa GitHub API URL, contoh: https://api.github.com/repos/username/repo"
         );
       }
 
       // GET COMMITS
-      const commitsRes = await fetch(`${repoUrl}/commits`, {
+      const commitsRes = await fetch(`${fixReportUrl}/commits`, {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${githubToken}`,
           "User-Agent": "Next.js",
@@ -132,12 +134,15 @@ const Page = ({ params }: { params: { id: string } }) => {
       const latestSha = commits[0].sha;
 
       // GET COMMIT DETAILS
-      const commitDetailRes = await fetch(`${repoUrl}/commits/${latestSha}`, {
-        headers: {
-          Authorization: `Bearer ${githubToken}`,
-          "User-Agent": "Next.js",
-        },
-      });
+      const commitDetailRes = await fetch(
+        `${fixReportUrl}/commits/${latestSha}`,
+        {
+          headers: {
+            Authorization: `Bearer ${githubToken}`,
+            "User-Agent": "Next.js",
+          },
+        }
+      );
 
       const commitDetail = await commitDetailRes.json();
       // Ambil max 5 file saja, dan HAPUS field patch karena terlalu besar
@@ -204,7 +209,23 @@ const Page = ({ params }: { params: { id: string } }) => {
         summary = "Tidak ada output dari GROQ";
       }
 
-      setGeneratedText(summary);
+      // setGeneratedText(summary);
+      const response = await fetch("/api/report/generate/" + id, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          summary,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        alert(result.message);
+        window.location.reload();
+      }
     } catch (err: any) {
       setGeneratedText("Gagal generate report: " + err.message);
     } finally {

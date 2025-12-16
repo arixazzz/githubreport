@@ -5,9 +5,11 @@ import { BreadcrumbSetItem } from "@/components/shared/layouts/myBreadcrumb";
 import TitleHeader from "@/components/shared/title";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { jwtDecode } from "jwt-decode";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 interface Project {
   id: number; // id bertipe number sesuai dengan tipe di schema Prisma
@@ -68,6 +70,31 @@ const Page = () => {
     return text;
   };
 
+  const cookieStore = Cookies.get("accessToken");
+  let userRole: string | null = null;
+
+  if (cookieStore) {
+    try {
+      const decodedToken: any = jwtDecode(cookieStore); // Decode the JWT token
+      userRole = decodedToken?.role; // Extract the role from the decoded token
+    } catch (error) {
+      console.error("Error decoding token:", error);
+    }
+  }
+
+  let button = null;
+
+  // Check if the user has the 'admin' role
+  if (userRole === "ADMIN") {
+    button = (
+      <Link href={"/listing-project/create"}>
+        <Button className="rounded-full">Tambah Project</Button>
+      </Link>
+    );
+  } else {
+    button = null; // Hide the button for other roles
+  }
+
   return (
     <Card>
       <BreadcrumbSetItem
@@ -88,9 +115,7 @@ const Page = () => {
           prefixIcon={<Search size={20} color="#473D3D" />}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <Link href={"/listing-project/create"}>
-          <Button className="rounded-full">Tambah Project</Button>
-        </Link>
+        <Link href={"/listing-project/create"}>{button}</Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {currentProjects.map((project) => (

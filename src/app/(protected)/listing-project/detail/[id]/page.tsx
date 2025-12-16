@@ -257,22 +257,8 @@ const Page = ({ params }: { params: { id: string } }) => {
   );
 
   return (
-    <div className="p-8 bg-gradient-to-r from-blue-200 to-blue-500 rounded-lg shadow-lg">
-      <BreadcrumbSetItem
-        items={[
-          {
-            title: "Listing Project",
-          },
-          {
-            title: "Listing Project",
-            href: "/listing-project",
-          },
-          {
-            title: "Detail",
-          },
-        ]}
-      />
-      <h1 className="text-3xl font-extrabold text-white mb-6">{data.title}</h1>
+    <div className="p-8 bg-gradient-to-r rounded-lg shadow-lg">
+      <h1 className="text-3xl font-extrabold text-black mb-6">{data.title}</h1>
 
       {/* Deskripsi Project */}
       <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
@@ -310,6 +296,11 @@ const Page = ({ params }: { params: { id: string } }) => {
       <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
         <h2 className="text-xl font-medium text-gray-700 mb-4">Stack</h2>
         <p className="text-sm text-gray-600">{data.stack}</p>
+      </div>
+
+      <div className="mb-8 p-6 bg-white rounded-xl shadow-md">
+        <h2 className="text-xl font-medium text-gray-700 mb-4">Link Github</h2>
+        <p className="text-sm text-gray-600">{data.linkgithub}</p>
       </div>
 
       <Link

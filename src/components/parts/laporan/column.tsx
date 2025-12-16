@@ -69,10 +69,25 @@ export const laporanColumns: ColumnDef<ReportResponse>[] = [
     header: "Nama Project",
     cell: ({ row }) => row.original.project.title,
   },
+  // {
+  //   accessorKey: "deskripsi",
+  //   header: "Deskripsi",
+  //   cell: ({ row }) => row.original.conclusion,
+  // },
   {
     accessorKey: "deskripsi",
     header: "Deskripsi",
-    cell: ({ row }) => row.original.conclusion,
+    cell: ({ row }) => (
+      <div
+        style={{
+          maxWidth: "300px",
+          wordWrap: "break-word",
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        {row.original.conclusion}
+      </div>
+    ),
   },
   {
     accessorKey: "action",
@@ -83,14 +98,29 @@ export const laporanColumns: ColumnDef<ReportResponse>[] = [
 
 const EditActionButton = ({ row }: { row: any }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newDeskripsi, setNewDeskripsi] = useState(row.original.deskripsi);
+  const [newDeskripsi, setNewDeskripsi] = useState(row.original.conclusion);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Simulate saving the edited deskripsi
     console.log("New Deskripsi Saved:", newDeskripsi);
+    const updateData = await fetch(`/api/report/update/${row.original.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        conclusion: newDeskripsi,
+      }),
+    });
+
+    if (updateData.status === 200) {
+      alert("Report berhasil diupdate");
+      window.location.reload();
+    }
+
     setIsModalOpen(false); // Close the modal after saving
   };
 

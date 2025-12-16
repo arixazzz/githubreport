@@ -1,3 +1,76 @@
+// import { NavItem } from "@/types/interface";
+// import {
+//   Bell,
+//   DockIcon,
+//   Image,
+//   LayoutDashboard,
+//   List,
+//   Map,
+//   Notebook,
+//   Table2,
+//   Users,
+//   View,
+// } from "lucide-react";
+// import Cookies from 'js-cookie';
+// import { jwtDecode } from "jwt-decode";
+
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// export const REGION_URL = process.env.NEXT_PUBLIC_API_REGION;
+
+// type navDateType = {
+//   navItems: NavItem[];
+// };
+
+//   const cookieStore = Cookies.get('accessToken')
+// console.log("string:",""+cookieStore+"")
+
+//   export const getNavData = (): navDateType => {
+//     const admin = [
+//       {
+//         title: "Dashboard",
+//         url: "/dashboard",
+//         icon: LayoutDashboard,
+//       },
+//       {
+//         title: "Listing Project",
+//         url: "/listing-project",
+//         icon: List,
+//       },
+//       {
+//         title: "Manajemen Pengguna",
+//         url: "/manajemen-user",
+//         icon: Users,
+//       },
+//       {
+//         title: "Log Aktivitas",
+//         url: "/log-aktivitas",
+//         icon: Notebook,
+//       },
+//     ]
+
+//     const user = [
+//       {
+//         title: "Dashboard",
+//         url: "/dashboard",
+//         icon: LayoutDashboard,
+//       },
+//       {
+//         title: "Listing Project",
+//         url: "/listing-project",
+//         icon: List,
+//       },
+//       {
+//         title: "Log Aktivitas",
+//         url: "/log-aktivitas",
+//         icon: Notebook,
+//       },
+//     ]
+
+//   return {
+//     navItems: admin
+//   };
+// };
+
 import { NavItem } from "@/types/interface";
 import {
   Bell,
@@ -11,6 +84,8 @@ import {
   Users,
   View,
 } from "lucide-react";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 export const REGION_URL = process.env.NEXT_PUBLIC_API_REGION;
@@ -19,85 +94,65 @@ type navDateType = {
   navItems: NavItem[];
 };
 
+// Decode the JWT token from cookies
+const cookieStore = Cookies.get("accessToken");
+let userRole: string | null = null;
+
+if (cookieStore) {
+  try {
+    const decodedToken: any = jwtDecode(cookieStore); // Decode the JWT token
+    userRole = decodedToken?.role; // Extract the role from the decoded token
+  } catch (error) {
+    console.error("Error decoding token:", error);
+  }
+}
+
 export const getNavData = (): navDateType => {
-  return {
-    navItems: [
-      {
-        title: "Dashboard",
-        url: "/dashboard",
-        icon: LayoutDashboard,
-      },
-      {
-        title: "Listing Project",
-        url: "/listing-project",
-        icon: List,
-      },
-      {
-        title: "Manajemen Pengguna",
-        url: "/manajemen-user",
-        icon: Users,
-      },
-      {
-        title: "Log Aktivitas",
-        url: "/log-aktivitas",
-        icon: Notebook,
-      },
-      // {
-      //   title: "Form Input",
-      //   url: "/form-input",
-      //   icon: DockIcon,
-      //   items: [
-      //     {
-      //       title: "Semua Input",
-      //       url: "/form-input/all",
-      //     },
-      //     {
-      //       title: "Surat",
-      //       url: "/form-input/letter",
-      //     },
-      //   ],
-      // },
-      // {
-      //   title: "Manajemen Pengguna",
-      //   url: "",
-      //   icon: Users,
-      //   items: [
-      //     {
-      //       title: "Users",
-      //       url: "/users",
-      //     },
-      //     {
-      //       title: "Roles",
-      //       url: "/roles",
-      //     },
-      //   ],
-      // },
-      // {
-      //   title: "Tables",
-      //   url: "/tables",
-      //   icon: Table2,
-      //   items: [
-      //     {
-      //       title: "tables admin",
-      //       url: "/tables/admin",
-      //     },
-      //   ],
-      // },
-      // {
-      //   title: "Maps View",
-      //   url: "/maps",
-      //   icon: Map,
-      // },
-      // {
-      //   title: "Images",
-      //   url: "/images",
-      //   icon: Image,
-      // },
-      // {
-      //   title: "View Label",
-      //   url: "/view-label",
-      //   icon: View,
-      // },
-    ],
-  };
+  const adminNavItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Listing Project",
+      url: "/listing-project",
+      icon: List,
+    },
+    {
+      title: "Manajemen Pengguna",
+      url: "/manajemen-user",
+      icon: Users,
+    },
+    {
+      title: "Log Aktivitas",
+      url: "/log-aktivitas",
+      icon: Notebook,
+    },
+  ];
+
+  const userNavItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Listing Project",
+      url: "/listing-project",
+      icon: List,
+    },
+    {
+      title: "Log Aktivitas",
+      url: "/log-aktivitas",
+      icon: Notebook,
+    },
+  ];
+
+  // Return different navigation items based on the user's role
+  if (userRole === "ADMIN") {
+    return { navItems: adminNavItems };
+  } else {
+    return { navItems: userNavItems };
+  }
 };

@@ -123,5 +123,6 @@ export async function GET(req: NextRequest) {
   });
 
   // Redirect the user to the dashboard
-  return NextResponse.redirect(new URL("/dashboard", req.url));
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  return NextResponse.redirect(new URL("/dashboard", baseUrl));
 }
