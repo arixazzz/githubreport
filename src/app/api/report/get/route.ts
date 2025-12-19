@@ -1,64 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { verifySession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    // Retrieve the access token from cookies
-    const cookieStore = cookies();
-    const dataToken = (await cookieStore).get("accessToken")?.value;
+    // 1. AUTH & RBAC Check
+    const session = await verifySession();
+    if (session instanceof NextResponse) return session;
 
-    if (!dataToken) {
-      return NextResponse.json(
-        { error: "Access token is missing" },
-        { status: 401 }
-      );
-    }
+    const { payload } = session;
+    const isAdmin = payload.roles.includes("ADMIN");
 
-    // Decode the JWT token
-    let decoded;
-    try {
-      decoded = jwt.verify(
-        dataToken,
-        process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ?? ""
-      ) as { name: string; userId: number };
-      console.log("Decoded Token:", decoded); // Log the decoded token for inspection
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-
-    // Ensure Prisma client is initialized correctly
-    console.log("Prisma Client Initialized:", prisma); // Log prisma client
-
-    // Fetch reports only for the current user based on userId
+    // 2. Fetch reports based on role
     const reports = await prisma.report.findMany({
-      where: {
-        userId: decoded.userId, // Ensure userId is correctly passed
-      },
+      where: isAdmin
+        ? {}
+        : {
+            userId: payload.sub,
+          },
       include: {
-        project: true, // Include related project data
-        user: true, // Include related user data
+        project: {
+          select: {
+            id: true,
+            title: true,
+            githubOwner: true,
+            githubRepo: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            nama: true,
+            email: true,
+            position: true,
+            usernamegithub: true,
+          },
+        },
+      },
+      orderBy: {
+        commitDate: "desc",
       },
     });
 
-    console.log("Fetched Reports:", reports); // Log fetched reports
-
-    if (!reports) {
-      return NextResponse.json(
-        { error: "No reports found for this user" },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json({ reports, status: 200 }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching reports:", error); // Log error for debugging
+    console.error("Error fetching reports:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

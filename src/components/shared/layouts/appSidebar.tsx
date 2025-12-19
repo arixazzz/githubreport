@@ -16,12 +16,16 @@ import { NavItems } from "./navItems";
 import NavItemsLogout from "./navItemsLogout";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const navData = getNavData();
-  const { permissions, isLoading } = usePermission();
-  const { decode } = useGetToken();
+  const { permissions, roles, isLoading } = usePermission();
+  // const { decode } = useGetToken();
+
+  // Use 'roles' from usePermission hook. Assuming single role for now or checking if includes ADMIN
+  const roleName = roles && roles.includes("ADMIN") ? "ADMIN" : "USER";
+
+  const navData = getNavData(roleName);
 
   // Default values lebih aman
-  const userRole = decode?.role ? [decode.role] : ["GUEST"];
+  const userRole = roles ? roles : ["GUEST"];
   const navItems = navData?.navItems ?? [];
 
   return (

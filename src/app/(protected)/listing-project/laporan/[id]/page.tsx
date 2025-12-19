@@ -6,22 +6,23 @@ import TitleHeader from "@/components/shared/title";
 import DataTable from "@/components/table/dataTable";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, use, useCallback } from "react";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface Project {
   id: number;
   title: string;
   detail: string;
   stack: string;
-  linkgithub: string;
+  githubOwner: string;
+  githubRepo: string;
+  developers?: any[];
 }
 
 interface User {
   id: number;
   nama: string;
-  usernamegithub: string;
   email: string;
-  role: "USER" | "ADMIN";
   position: string | null;
 }
 
@@ -32,202 +33,104 @@ interface ReportResponse {
   conclusion: string;
   timestamp: string;
   commitRange: string;
+  commitDate: string;
 }
 
-const Page = ({ params }: { params: { id: string } }) => {
+const Page = (props: { params: Promise<{ id: string }> }) => {
+  const params = use(props.params);
   const { id } = params;
 
   const [data, setData] = useState<ReportResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [githubToken, setGithubToken] = useState<string | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
-
-  const [generatedText, setGeneratedText] = useState("");
+  const [project, setProject] = useState<
+    (Project & { developers: any[] }) | null
+  >(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // States for Daily Report
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+  const [selectedDeveloperId, setSelectedDeveloperId] = useState<string>("");
 
   // ------------------------------------
   // LOAD PROJECT DATA
   // ------------------------------------
-  useEffect(() => {
-    async function loadProject() {
-      try {
-        const res = await fetch(`/api/project/get/${id}`);
-        const result = await res.json();
-        setProject(result.project);
-      } catch (err) {
-        console.error("Failed load project:", err);
-      }
-    }
+  const loadProject = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/project/get/${id}`);
+      if (!res.ok) throw new Error("Gagal memuat data project");
+      const result = await res.json();
 
-    loadProject();
+      // The API returns { project: [ { ... } ] } because of findMany in /api/project/get/route.ts
+      // But for a single project get, it might be different. Let's handle both.
+      const projectData = Array.isArray(result.project)
+        ? result.project[0]
+        : result.project;
+      setProject(projectData);
+    } catch (err: any) {
+      console.error("Failed load project:", err);
+      setError(err.message);
+    }
   }, [id]);
 
   // ------------------------------------
   // LOAD REPORT LIST FOR THIS PROJECT
   // ------------------------------------
-  useEffect(() => {
-    async function loadReports() {
-      try {
-        const res = await fetch(`/api/report/get/${id}`);
-        const result = await res.json();
-        setData(result.reports || []);
-      } catch (err) {
-        console.error("Failed load reports:", err);
-      } finally {
-        setIsLoading(false); // FIX: SET LOADING FALSE
+  const loadReports = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/report/get/${id}`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          setData([]);
+          return;
+        }
+        throw new Error("Gagal memuat daftar laporan");
       }
+      const result = await res.json();
+      setData(result.reports || []);
+    } catch (err: any) {
+      console.error("Failed load reports:", err);
+    } finally {
+      setIsLoading(false);
     }
-
-    loadReports();
   }, [id]);
-  // ------------------------------------
-  // LOAD GITHUB TOKEN
-  // ------------------------------------
+
   useEffect(() => {
-    async function loadGitToken() {
-      try {
-        const res = await fetch("/api/auth/get-token?tokenParams=githubToken");
-        const result = await res.json();
-        setGithubToken(result?.token?.value || null);
-      } catch (err) {
-        console.error("Failed load token:", err);
-      }
-    }
-    loadGitToken();
-  }, []);
+    loadProject();
+    loadReports();
+  }, [loadProject, loadReports]);
 
   // ------------------------------------
-  // GENERATE REPORT VIA GROQ
+  // GENERATE REPORT (Daily Logic)
   // ------------------------------------
-  const generateReport = async () => {
+  const handleGenerateReport = async () => {
     try {
       setIsGenerating(true);
-      setGeneratedText("");
+      setError(null);
 
-      if (!project) throw new Error("Project tidak ditemukan");
-      if (!githubToken) throw new Error("Github token tidak ditemukan");
-
-      const repoUrl = project.linkgithub;
-      const splitRepo = repoUrl.split("/");
-      const fixReportUrl = `${splitRepo[0]}//api.${splitRepo[2]}/repos/${splitRepo[3]}/${splitRepo[4]}`;
-
-      if (!fixReportUrl.includes("https://api.github.com")) {
-        throw new Error(
-          "linkgithub harus berupa GitHub API URL, contoh: https://api.github.com/repos/username/repo"
-        );
-      }
-
-      // GET COMMITS
-      const commitsRes = await fetch(`${fixReportUrl}/commits`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${githubToken}`,
-          "User-Agent": "Next.js",
-        },
-      });
-
-      if (!commitsRes.ok) throw new Error("Gagal fetch commits GitHub");
-
-      const commits = await commitsRes.json();
-      if (!commits.length) throw new Error("Tidak ada commit di repo");
-
-      const latestSha = commits[0].sha;
-
-      // GET COMMIT DETAILS
-      const commitDetailRes = await fetch(
-        `${fixReportUrl}/commits/${latestSha}`,
-        {
-          headers: {
-            Authorization: `Bearer ${githubToken}`,
-            "User-Agent": "Next.js",
-          },
-        }
-      );
-
-      const commitDetail = await commitDetailRes.json();
-      // Ambil max 5 file saja, dan HAPUS field patch karena terlalu besar
-      const fixSumary = (commitDetail.files || [])
-        .slice(0, 5)
-        .map((f: any) => ({
-          filename: f.filename,
-          status: f.status,
-          additions: f.additions,
-          deletions: f.deletions,
-          changes: f.changes,
-        }));
-
-      // SEND TO GROQ
-      const groqRes = await fetch("https://api.groq.com/openai/v1/responses", {
+      const response = await fetch(`/api/report/generate/${id}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b", // 🔥 recommended: fast, cheap, large context
-          input: `Buat ringkasan commit yang sangat singkat dan mudah dibaca. 
-          Gunakan maksimal 4 poin saja. 
-          Jangan tampilkan angka baris, jangan tampilkan detail teknis. 
-          Fokus pada inti perubahan seperti: menambah fitur, memperbarui file, atau perbaikan.
-
-          Format output:
-          - Perubahan 1
-          - Perubahan 2
-          - Perubahan 3
-
-          Data perubahan:
-          ${JSON.stringify(fixSumary, null, 2)}
-          `,
-        }),
-      });
-
-      const groqJson = await groqRes.json();
-      console.log("GROQ:", groqJson);
-
-      let summary = "";
-
-      // GROQ FORMAT FIX
-      if (groqJson?.output?.[1]?.content) {
-        const content = groqJson.output[1].content;
-
-        if (Array.isArray(content)) {
-          summary = content
-            .map(
-              (c: any) => c?.text || c?.content || c?.value || JSON.stringify(c)
-            )
-            .join("\n");
-        } else if (typeof content === "object") {
-          summary = JSON.stringify(content, null, 2);
-        } else {
-          summary = String(content);
-        }
-      } else if (groqJson?.output_text) {
-        summary = groqJson.output_text;
-      } else if (groqJson?.choices?.[0]?.message?.content) {
-        summary = groqJson.choices[0].message.content;
-      } else {
-        summary = "Tidak ada output dari GROQ";
-      }
-
-      // setGeneratedText(summary);
-      const response = await fetch("/api/report/generate/" + id, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          summary,
+          date: selectedDate,
+          developerId: selectedDeveloperId || undefined,
         }),
       });
 
       const result = await response.json();
 
-      if (result.status === 200) {
-        alert(result.message);
-        window.location.reload();
+      if (!response.ok) {
+        throw new Error(result.error || "Gagal membuat laporan otomatis");
       }
+
+      alert(result.message || "Laporan berhasil dibuat");
+      loadReports(); // Reload the table
     } catch (err: any) {
-      setGeneratedText("Gagal generate report: " + err.message);
+      console.error("Generate report error:", err);
+      setError(err.message);
     } finally {
       setIsGenerating(false);
     }
@@ -237,38 +140,108 @@ const Page = ({ params }: { params: { id: string } }) => {
   // RENDER UI
   // ------------------------------------
 
-  if (isLoading) return <p>Loading...</p>;
-
   return (
-    <Card>
+    <Card className="p-6">
       <BreadcrumbSetItem
-        items={[{ title: "Reports" }, { title: "Project Reports" }]}
+        items={[
+          { title: "Listing Project", href: "/listing-project" },
+          { title: "Project Reports" },
+        ]}
       />
 
-      <TitleHeader title="Laporan Project" />
+      <div className="flex flex-col mb-8 gap-4 border-b pb-6">
+        <div>
+          <TitleHeader title={`Laporan Project: ${project?.title || "..."}`} />
+          {project && (
+            <p className="text-sm text-gray-500 mt-1">
+              Repo:{" "}
+              <span className="font-mono text-blue-600 font-medium">
+                {project.githubOwner}/{project.githubRepo}
+              </span>
+            </p>
+          )}
+        </div>
 
-      {/* GENERATE BUTTON */}
-      <div className="mt-4">
-        <Button
-          className="w-full py-3 rounded-full"
-          disabled={isGenerating || !githubToken}
-          onClick={generateReport}
-        >
-          {isGenerating ? "Generating..." : "Generate Report Otomatis"}
-        </Button>
+        {/* DAILY REPORT FORM */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100 mt-2">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Tanggal Commit
+            </label>
+            <input
+              type="date"
+              className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          </div>
+
+          {project?.developers && project.developers.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Developer (Admin Only)
+              </label>
+              <select
+                className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none h-[42px]"
+                value={selectedDeveloperId}
+                onChange={(e) => setSelectedDeveloperId(e.target.value)}
+              >
+                <option value="">-- Gunakan akun saya --</option>
+                {project.developers.map((dev: any) => (
+                  <option key={dev.user.id} value={dev.user.id}>
+                    {dev.user.nama} ({dev.user.usernamegithub})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <Button
+            className="rounded-lg px-6 flex gap-2 h-[42px]"
+            disabled={isGenerating || !project}
+            onClick={handleGenerateReport}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Generate Laporan Harian
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* RESULT */}
-      {generatedText && (
-        <Card className="p-4 mt-4 bg-gray-50">
-          <h2 className="font-semibold mb-2 text-xl">Hasil Generate Report</h2>
-          <p className="whitespace-pre-line">{generatedText}</p>
-        </Card>
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm flex items-start gap-3">
+          <div className="mt-0.5">⚠️</div>
+          <p>{error}</p>
+        </div>
       )}
 
       {/* REPORT TABLE */}
       <div className="mt-4">
-        <DataTable columns={laporanColumns} data={data} />
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p>Memuat daftar laporan...</p>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-xl">
+            <p className="text-gray-400">
+              Belum ada laporan untuk project ini.
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Klik tombol di atas untuk membuat laporan pertama.
+            </p>
+          </div>
+        ) : (
+          <DataTable columns={laporanColumns} data={data} />
+        )}
       </div>
     </Card>
   );

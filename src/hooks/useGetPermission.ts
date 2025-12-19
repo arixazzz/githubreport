@@ -12,9 +12,12 @@ export function usePermission() {
 
   // 1️⃣ memoize permissions array
   const permissions: string[] = useMemo(
-    () => (data as any)?.data?.role?.rolePermissions ?? [],
+    () => (data as any)?.permissions ?? [],
     [data]
   );
+
+  // 3️⃣ memoize roles array
+  const roles: string[] = useMemo(() => (data as any)?.roles ?? [], [data]);
 
   // 2️⃣ memoize can function
   const can = useCallback(
@@ -28,5 +31,5 @@ export function usePermission() {
     [permissions]
   );
 
-  return { can, isLoading, permissions };
+  return { can, isLoading, permissions, roles };
 }

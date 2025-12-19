@@ -8,7 +8,7 @@ export const loginValidation = z.object({
 export type LoginPayload = z.infer<typeof loginValidation>;
 
 export const forgoutPasswordValidation = z.object({
-  username: z.string().min(1, "Username wajib diisi"),
+  email: z.string().email("Format email salah").min(1, "Email wajib diisi"),
 });
 
 export type ForgoutPasswordPayload = z.infer<typeof forgoutPasswordValidation>;

@@ -1,86 +1,104 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Ensure Prisma is correctly configured
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
+import { prisma } from "@/lib/prisma";
+import { verifySession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    // Retrieve the access token from cookies
-    const cookieStore = cookies();
-    const dataToken = (await cookieStore).get("accessToken")?.value;
+    // 1. AUTH & RBAC
+    const session = await verifySession();
+    if (session instanceof NextResponse) return session;
 
-    if (!dataToken) {
-      // If the access token is not found, return an error response
-      return NextResponse.json(
-        { error: "Access token is missing" },
-        { status: 401 }
-      );
-    }
+    const { payload } = session;
+    const isAdmin = payload.roles.includes("ADMIN");
 
-    // Decode the JWT token
-    let decoded;
-    try {
-      decoded = jwt.verify(
-        dataToken,
-        process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ?? ""
-      ) as { userId: number };
+    // 2. DASHBOARD DATA
+    const projectFilter = isAdmin
+      ? {}
+      : {
+          developers: {
+            some: {
+              userId: payload.sub,
+            },
+          },
+        };
 
-      console.log("Decoded Token:", decoded); // Log the decoded token for inspection
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 }
-      );
-    }
+    const totalProjects = await prisma.project.count({
+      where: projectFilter,
+    });
 
-    // Fetch the necessary data for the dashboard
-    const totalProjects = await prisma.project.count();
     const activeProjects = await prisma.project.count({
       where: {
+        ...projectFilter,
         deadline: {
-          gte: new Date(), // Active projects have a future deadline
+          gte: new Date(),
         },
       },
     });
 
-    const totalDevelopers = await prisma.developer.count();
+    // Total user
+    const totalUsers = await prisma.user.count();
 
+    // Recent Activity
     const recentActivities = await prisma.logActivity.findMany({
       take: 5,
-      orderBy: {
-        timestamp: "desc", // Sort activities by the most recent
-      },
+      orderBy: { timestamp: "desc" },
+      where: isAdmin
+        ? {}
+        : {
+            userId: payload.sub,
+          },
       include: {
-        user: true, // Include user data for each activity
+        user: {
+          select: {
+            id: true,
+            nama: true,
+            usernamegithub: true,
+          },
+        },
       },
     });
 
+    // Recent Reports
     const recentReports = await prisma.report.findMany({
       take: 5,
-      orderBy: {
-        timestamp: "desc", // Sort reports by the most recent
-      },
+      orderBy: { createdAt: "desc" },
+      where: isAdmin
+        ? {}
+        : {
+            userId: payload.sub,
+          },
       include: {
-        project: true, // Include related project data
-        user: true, // Include user who generated the report
+        project: {
+          select: {
+            id: true,
+            title: true,
+            githubRepo: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            nama: true,
+            usernamegithub: true,
+          },
+        },
       },
     });
 
-    // Return all the fetched data in the response
     return NextResponse.json(
       {
         totalProjects,
         activeProjects,
-        totalDevelopers,
+        totalUsers,
         recentActivities,
         recentReports,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching dashboard data:", error); // Log error for debugging
+    console.error("Dashboard error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

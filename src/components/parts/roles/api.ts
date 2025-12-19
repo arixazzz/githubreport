@@ -32,11 +32,11 @@ export const useRolesMutation = (id?: number) => {
     RolesPayload
   >({
     mutationFn: async (payload) => {
-      return await offlineSendData(
+      return (await offlineSendData(
         id ? `master/role/${id}` : `master/role/`,
         payload,
         id ? "PUT" : "POST"
-      );
+      )) as ApiResponse<DataObject<RolesPayload>>;
     },
     successMessage: `Berhasil ${id ? "Mengupdate" : "Menambah"} Roles`,
   });

@@ -9,7 +9,7 @@ import {
   CustomFormInput,
   inputFilters,
 } from "@/components/shared/forms/customFormInput";
-import GoogleSignInButton from "@/components/shared/gitHubSignInButton";
+import { GitHubSignInButton } from "@/components/shared/gitHubSignInButton";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import useShowErrors from "@/hooks/useShowErrors";
@@ -104,7 +104,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <GoogleSignInButton />
+              <GitHubSignInButton />
             </div>
           </div>
           <p className="px-8 text-center text-sm text-muted-foreground">

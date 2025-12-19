@@ -95,19 +95,19 @@ type navDateType = {
 };
 
 // Decode the JWT token from cookies
-const cookieStore = Cookies.get("accessToken");
-let userRole: string | null = null;
+// const cookieStore = Cookies.get("accessToken");
+// let userRole: string | null = null;
 
-if (cookieStore) {
-  try {
-    const decodedToken: any = jwtDecode(cookieStore); // Decode the JWT token
-    userRole = decodedToken?.role; // Extract the role from the decoded token
-  } catch (error) {
-    console.error("Error decoding token:", error);
-  }
-}
+// if (cookieStore) {
+//   try {
+//     const decodedToken: any = jwtDecode(cookieStore); // Decode the JWT token
+//     userRole = decodedToken?.role; // Extract the role from the decoded token
+//   } catch (error) {
+//     console.error("Error decoding token:", error);
+//   }
+// }
 
-export const getNavData = (): navDateType => {
+export const getNavData = (userRole: string): navDateType => {
   const adminNavItems = [
     {
       title: "Dashboard",

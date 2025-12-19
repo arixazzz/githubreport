@@ -38,7 +38,14 @@ export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
   {
     accessorKey: "role",
     header: "Peran",
-    cell: ({ row }) => row.original.role,
+    cell: ({ row }) => {
+      // Display roles as comma-separated string
+      const roles = row.original.roles;
+      if (Array.isArray(roles) && roles.length > 0) {
+        return roles.join(", ");
+      }
+      return row.original.role || "-";
+    },
   },
   {
     accessorKey: "action",
@@ -53,6 +60,7 @@ export const ManajemenUserColumns: ColumnDef<ManajemenUserInterface>[] = [
 ];
 const EditActionButton = ({ row }: { row: any }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [newNama, setNewNama] = useState(row.original.nama);
   const [newEmail, setNewEmail] = useState(row.original.email);
   const [newPosition, setNewPosition] = useState(row.original.position);
@@ -61,24 +69,35 @@ const EditActionButton = ({ row }: { row: any }) => {
   const closeModal = () => setIsModalOpen(false);
 
   const handleSave = async () => {
-    const updateData = await fetch(`/api/users/update/${row.original.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        nama: newNama,
-        email: newEmail,
-        position: newPosition,
-        role: newRole,
-      }),
-    });
+    setLoading(true);
+    try {
+      const updateData = await fetch(`/api/users/update/${row.original.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: newNama,
+          email: newEmail,
+          position: newPosition,
+          role: newRole,
+        }),
+      });
 
-    if (updateData.status === 200) {
-      alert("Pengguna berhasil diupdate");
-      window.location.reload();
+      if (updateData.ok) {
+        alert("Pengguna berhasil diupdate");
+        window.location.reload();
+      } else {
+        const error = await updateData.json();
+        alert(`Gagal update: ${error.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      alert("Terjadi kesalahan saat update");
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setIsModalOpen(false);
     }
-    setIsModalOpen(false); // Close the modal after saving
   };
 
   return (
@@ -144,20 +163,26 @@ const EditActionButton = ({ row }: { row: any }) => {
               >
                 Peran
               </label>
-              <input
+              <select
                 id="role"
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
                 className="w-full p-2 border rounded"
-                type="text"
-              />
+              >
+                <option value="USER">USER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
             </div>
             <div className="mt-4 flex justify-end">
-              <Button onClick={closeModal} className="mr-2">
+              <Button onClick={closeModal} className="mr-2" disabled={loading}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} className="bg-blue-500 text-white">
-                Save
+              <Button
+                onClick={handleSave}
+                className="bg-blue-500 text-white"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>
@@ -168,6 +193,8 @@ const EditActionButton = ({ row }: { row: any }) => {
 };
 
 const DeleteActionButton = ({ row }: { row: any }) => {
+  const [loading, setLoading] = useState(false);
+
   const handleDelete = async () => {
     const confirmDelete = confirm(
       `Yakin ingin menghapus pengguna ${row.original.nama}?`
@@ -175,21 +202,30 @@ const DeleteActionButton = ({ row }: { row: any }) => {
 
     if (!confirmDelete) return;
 
-    const res = await fetch(`/api/users/delete/${row.original.id}`, {
-      method: "DELETE",
-    });
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users/delete/${row.original.id}`, {
+        method: "DELETE",
+      });
 
-    if (res.status === 200) {
-      alert("Pengguna berhasil dihapus");
-      window.location.reload();
-    } else {
-      alert("Gagal menghapus pengguna");
+      if (res.ok) {
+        alert("Pengguna berhasil dihapus");
+        window.location.reload();
+      } else {
+        const error = await res.json();
+        alert(`Gagal menghapus: ${error.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      alert("Terjadi kesalahan saat menghapus");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Button onClick={handleDelete} className="text-red-500">
-      Delete
+    <Button onClick={handleDelete} className="text-red-500" disabled={loading}>
+      {loading ? "Deleting..." : "Delete"}
     </Button>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useUsersMutation } from "@/components/parts/manajemen-user/users/api";
+import { useUsersMutation } from "@/components/parts/users/api";
 import { useGetRoles } from "@/components/parts/roles/api";
 
 import {

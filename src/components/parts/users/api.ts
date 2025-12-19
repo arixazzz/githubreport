@@ -11,6 +11,7 @@ import {
   ChangePasswordPayload,
   ChangePasswordUserPayload,
   UserProfilePayload,
+  UserPayload,
 } from "./validation";
 
 // 🔹 Fetch user detail yang aman
@@ -20,7 +21,7 @@ const fetchUserDetail = async (): Promise<
   try {
     const response =
       await offlineFetcher<ApiResponse<DataObject<UserDetailResponse>>>(
-        "user/detail"
+        "auth/me"
       );
     // pastikan selalu return object
     return (
@@ -81,5 +82,20 @@ export const useUserPasswordMutation = (userId?: number) => {
       );
     },
     successMessage: `Berhasil Memperbaharui Password User`,
+  });
+};
+// 🔹 Hook untuk management user (Admin)
+export const useUsersMutation = (id?: number) => {
+  return useFormMutation<
+    ApiResponse<DataObject<UserPayload>>,
+    Error,
+    UserPayload
+  >({
+    mutationFn: async (payload) => {
+      const url = id ? `users/update/${id}` : `users/create`;
+      const method = id ? "PUT" : "POST";
+      return await sendData(url, payload, method, true);
+    },
+    successMessage: `Berhasil ${id ? "Mengupdate" : "Menambah"} User`,
   });
 };

@@ -1,7 +1,8 @@
 interface ManajemenUserInterface {
-  id: string;
+  id: string | number;
   nama: string;
   email: string;
   position: string;
-  role: string;
+  role: string | null;
+  roles: string[];
 }

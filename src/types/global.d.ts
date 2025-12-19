@@ -79,3 +79,11 @@ interface AccessRule {
 }
 
 type SidebarAccessMap = Record<string, AccessRule>;
+
+interface AreaProperties {
+  nm_kecamatan: string;
+  kd_kecamatan: string;
+  nm_desa?: string;
+  kd_desa?: string;
+  [key: string]: any;
+}

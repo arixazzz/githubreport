@@ -14,6 +14,7 @@ import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { CustomFormMultiSelect } from "@/components/shared/forms/customFormMultipleSelect";
+import { CustomFormSelect } from "@/components/shared/forms/customFormSelect";
 import { useEffect, useState } from "react";
 
 export const access: AccessRule = {
@@ -57,7 +58,6 @@ export default function Page() {
   }, []);
 
   const onSubmit = async (data: any) => {
-    console.log("Submitted data:", data);
     try {
       const response = await fetch("/api/project/create", {
         method: "POST",
@@ -134,9 +134,23 @@ export default function Page() {
                 type="date"
               />
               <CustomFormInput<any>
-                name="linkgithub"
-                label="URL GitHub"
-                placeholder="Masukkan URL GitHub"
+                name="githubOwner"
+                label="GitHub Owner"
+                placeholder="e.g. facebook"
+              />
+              <CustomFormInput<any>
+                name="githubRepo"
+                label="GitHub Repository"
+                placeholder="e.g. react"
+              />
+              <CustomFormSelect
+                label="Visibility"
+                name="visibility"
+                placeholder="Pilih Visibility"
+                options={[
+                  { label: "Public", value: "PUBLIC" },
+                  { label: "Private", value: "PRIVATE" },
+                ]}
               />
               <CustomFormInput<any>
                 name="stack"

@@ -32,7 +32,7 @@ export default function ForgotPassword() {
   const onSubmit = (data: ForgoutPasswordPayload) => {
     forgoutMutation.mutate(data, {
       onSuccess: () => {
-        Cookie.set("reset-password-mail", form.watch("email"));
+        Cookie.set("reset-password-mail", form.watch("email") as string);
         router.replace("reset/otp");
       },
     });
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
           <figure className="w-fit flex items-center">
             <div className="bg-white rounded-full w-16 h-16 aspect-square object-contain p-2 overflow-hidden">
               <Image
-                src={"/assets/images/dprdpali.png"}
+                src={"/assets/icons/logo.png"}
                 width={90}
                 height={90}
                 alt="login-office"
@@ -58,7 +58,7 @@ export default function ForgotPassword() {
               />
             </div>
             <figcaption className="w-1/2 text-sm text-text-700 ml-4">
-              Sistem Informasi Manajemen Sekretariat Dewan PALI
+              Sistem Informasi Manajemen Github Report
             </figcaption>
           </figure>
         </DialogTitle>

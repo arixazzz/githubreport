@@ -15,6 +15,19 @@ export const Modal = ({ isOpen, onClose, children }: any) => {
 };
 import { Button } from "@/components/ui/button"; // Asumsikan kamu punya komponen button
 
+interface ReportResponse {
+  id: number;
+  project: {
+    title: string;
+  };
+  user: {
+    usernamegithub: string;
+  };
+  conclusion: string;
+  timestamp: string;
+  commitDate: string;
+}
+
 export const laporanColumns: ColumnDef<ReportResponse>[] = [
   {
     accessorKey: "id",
@@ -51,8 +64,9 @@ export const laporanColumns: ColumnDef<ReportResponse>[] = [
     accessorKey: "date",
     header: "Tanggal",
     cell: ({ row }) => {
-      // Format the timestamp to a readable date in "id-ID" locale
-      return new Date(row.original.timestamp).toLocaleDateString("id-ID", {
+      // row.original.commitDate is the actual date of the activities
+      const dateValue = row.original.commitDate || row.original.timestamp;
+      return new Date(dateValue).toLocaleDateString("id-ID", {
         day: "2-digit",
         month: "long",
         year: "numeric",

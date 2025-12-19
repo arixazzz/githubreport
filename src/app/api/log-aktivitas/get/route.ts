@@ -1,53 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { verifySession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function GET(req: NextRequest) {
   try {
-    // Retrieve the access token from cookies
-    const cookieStore = cookies();
-    const dataToken = (await cookieStore).get("accessToken")?.value;
+    // 1. AUTH & RBAC
+    const session = await verifySession();
+    if (session instanceof NextResponse) return session;
 
-    if (!dataToken) {
-      return NextResponse.json(
-        { error: "Access token is missing" },
-        { status: 401 }
-      );
+    const { payload } = session;
+    const isAdmin = payload.roles.includes("ADMIN");
+
+    // 2. GET QUERY PARAMETERS
+    const { searchParams } = new URL(req.url);
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
+    // 3. BUILD WHERE CLAUSE
+    const whereClause: any = {};
+
+    // RBAC Filter: Admin sees all, User sees only their own
+    if (!isAdmin) {
+      whereClause.userId = payload.sub;
     }
 
-    // Decode the JWT token
-    let decoded;
-    try {
-      decoded = jwt.decode(dataToken) as { userId: number };
-      if (!decoded?.userId) {
-        return NextResponse.json(
-          { error: "Invalid or expired token" },
-          { status: 401 }
-        );
+    // Date Filter
+    if (startDate || endDate) {
+      whereClause.timestamp = {};
+
+      if (startDate) {
+        whereClause.timestamp.gte = new Date(startDate);
       }
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Failed to decode token" },
-        { status: 401 }
-      );
+
+      if (endDate) {
+        const endDateTime = new Date(endDate);
+        endDateTime.setDate(endDateTime.getDate() + 1);
+        whereClause.timestamp.lt = endDateTime;
+      }
     }
 
-    // Fetch logs only for the current user based on userId
+    // 4. FETCH LOGS
     const log = await prisma.logActivity.findMany({
-      where: {
-        userId: decoded.userId, // Filter by the current user's ID
+      where: whereClause,
+      orderBy: {
+        timestamp: "desc",
       },
       include: {
-        user: true, // Include the related user data (name, email, etc.)
+        user: {
+          select: {
+            id: true,
+            nama: true,
+            usernamegithub: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({ log, status: 200 }, { status: 200 });
+    return NextResponse.json({ log }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching logs:", error); // Log error for debugging
+    console.error("Error fetching logs:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

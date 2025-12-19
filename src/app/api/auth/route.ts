@@ -1,97 +1,105 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import { signJwt } from "@/lib/jwt";
 import { cookies } from "next/headers";
-
-// Define JwtPayloadInterface (Ensure that you have this interface defined)
-interface JwtPayloadInterface {
-  userId: number;
-  email: string;
-  name: string;
-  role: "USER" | "ADMIN";
-}
-
-// Function to generate the access token
-export const generateAccesToken = function (
-  payload: JwtPayloadInterface,
-  secretToken: string,
-  expiresIn: number
-): string {
-  return jwt.sign(payload, secretToken, { expiresIn });
-};
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
-    const data = await req.json(); // Get the body from the request
+    const { username, password } = await req.json();
 
-    // Check if user exists
-    const userCheck = await prisma.user.findUnique({
-      where: {
-        usernamegithub: data.username,
+    if (!username || !password) {
+      return NextResponse.json(
+        { error: "Username dan password wajib diisi" },
+        { status: 400 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { usernamegithub: username },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: { permission: true },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
-    if (!userCheck) {
+    if (!user || !user.password) {
       return NextResponse.json(
-        { error: "Username tidak ditemukan", status: 400 },
-        { status: 400 }
+        { error: "Username atau password salah" },
+        { status: 401 }
       );
     }
 
-    // Check if password is set
-    if (userCheck.password === "password") {
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
       return NextResponse.json(
-        { error: "Silahkan anda buat password terlebih dahulu", status: 400 },
-        { status: 400 }
+        { error: "Username atau password salah" },
+        { status: 401 }
       );
     }
 
-    // Check if password matches
-    if (userCheck.password !== data.password) {
-      return NextResponse.json(
-        { error: "Password tidak cocok", status: 400 },
-        { status: 400 }
-      );
-    }
+    const roles = user.roles.map((r) => r.role.name);
 
-    // Create the payload for the JWT token
-    const tokenPayload: JwtPayloadInterface = {
-      userId: Number(userCheck?.id),
-      email: userCheck?.email as string,
-      name: userCheck?.nama as string,
-      role: userCheck?.role as "USER" | "ADMIN",
-    };
-
-    // Generate the JWT token
-    const secretToken = process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ?? "";
-    const token = generateAccesToken(
-      tokenPayload,
-      String(secretToken),
-      3600 * 24 // 1 day expiration
+    const permissions = Array.from(
+      new Set(
+        user.roles.flatMap((r) =>
+          r.role.permissions.map((p) => p.permission.name)
+        )
+      )
     );
 
-    // Set the access token in cookies
-    (await cookies()).set({
-      name: "accessToken",
-      value: token,
+    const token = signJwt({
+      sub: user.id,
+      email: user.email,
+      name: user.nama,
+      roles,
+      permissions,
     });
 
-    // Log the activity (successful login)
+    const cookieStore = cookies();
+    (await cookieStore).set("accessToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 hari
+    });
+
     await prisma.logActivity.create({
       data: {
-        userId: userCheck.id, // Store the user ID in the log
-        activity: `User ${userCheck.usernamegithub} logged in successfully`,
+        userId: user.id,
+        activity: `User ${user.usernamegithub} logged in (password)`,
       },
     });
 
     return NextResponse.json(
-      { message: "Login berhasil", status: 200 },
+      {
+        message: "Login berhasil",
+        user: {
+          id: user.id,
+          nama: user.nama,
+          email: user.email,
+          roles,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error during login:", error);
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    console.error("Login error:", error);
+    return NextResponse.json(
+      { error: "Terjadi kesalahan saat login" },
+      { status: 500 }
+    );
   }
 }

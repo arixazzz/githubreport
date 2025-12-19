@@ -1,4 +1,3 @@
-"use server";
 import { queryClient } from "@/app/QueryProvider";
 import { BASE_URL } from "@/constants";
 import { db } from "@/db/db";
@@ -26,12 +25,13 @@ export async function offlineFetcher<T = any>(
   init?: OfflineFetcherInit
 ): Promise<T> {
   const cacheKey = url;
+  const shouldCache = url !== "auth/me";
 
-  // 🔒 Block khusus supaya tidak pernah fetch ke auth/me
-  if (url === "auth/me") {
-    console.warn("⛔ Fetch ke auth/me diblokir oleh offlineFetcher");
-    return { data: {} } as any;
-  }
+  // 🔒 Block khusus supaya tidak pernah fetch ke auth/me (DIHAPUS SUPAYA BISA PAKAI AUTH/ME)
+  // if (url === "auth/me") {
+  //   console.warn("⛔ Fetch ke auth/me diblokir oleh offlineFetcher");
+  //   return { data: {} } as any;
+  // }
 
   const token = Cookies.get("accessToken");
   const {
@@ -44,13 +44,14 @@ export async function offlineFetcher<T = any>(
   } = init || {};
 
   try {
-    const cached = await db.cache.get(cacheKey);
+    const cached = shouldCache ? await db.cache.get(cacheKey) : null;
     if (cached) {
       // Background fetch, error tidak crash
       (async () => {
         try {
           const res = await fetch(`${BASE_URL}/${url}`, {
             ...fetchOptions,
+            credentials: "include", // 🔹 Wajib supaya cookie httpOnly terkirim
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
@@ -63,12 +64,14 @@ export async function offlineFetcher<T = any>(
             data = parseJson ? await res.json() : res;
             if (isFunction(mappingData)) data = mappingData(data.data);
 
-            await db.cache.put({
-              key: cacheKey,
-              data,
-              updatedAt: new Date(),
-              expiresAt: new Date(Date.now() + ttl),
-            });
+            if (shouldCache) {
+              await db.cache.put({
+                key: cacheKey,
+                data,
+                updatedAt: new Date(),
+                expiresAt: new Date(Date.now() + ttl),
+              });
+            }
 
             if (queryKey) queryClient.setQueryData(queryKey, data);
 
@@ -91,10 +94,17 @@ export async function offlineFetcher<T = any>(
     }
 
     // Fetch langsung jika cache kosong
-    const res = await fetch(`${BASE_URL}/${url}`, {
+    let baseUrl = BASE_URL || "/api";
+    // Ensure baseUrl ends with /api
+    if (baseUrl && !baseUrl.endsWith("/api")) {
+      baseUrl = `${baseUrl.replace(/\/$/, "")}/api`;
+    }
+
+    const res = await fetch(`${baseUrl}/${url}`, {
       ...fetchOptions,
+      credentials: "include", // 🔹 Wajib supaya cookie httpOnly terkirim
       headers: {
-        Authorization: `Bearer ${token}`,
+        // Authorization: `Bearer ${token}`, // ❌ Cookie is httpOnly, cannot read client-side
         "Content-Type": "application/json",
         ...(customHeaders ?? {}),
       },
@@ -108,12 +118,14 @@ export async function offlineFetcher<T = any>(
     let data = parseJson ? await res.json() : res;
     if (isFunction(mappingData)) data = mappingData(data.data);
 
-    await db.cache.put({
-      key: cacheKey,
-      data,
-      updatedAt: new Date(),
-      expiresAt: new Date(Date.now() + ttl),
-    });
+    if (shouldCache) {
+      await db.cache.put({
+        key: cacheKey,
+        data,
+        updatedAt: new Date(),
+        expiresAt: new Date(Date.now() + ttl),
+      });
+    }
 
     if (queryKey) queryClient.setQueryData(queryKey, data);
 

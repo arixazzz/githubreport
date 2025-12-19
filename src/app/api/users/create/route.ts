@@ -1,41 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken"; // Ensure you're using jwt.verify()
+import { verifySession } from "@/lib/auth";
+import { UserCreateSchema } from "@/lib/validation";
+import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  // Retrieve the access token from cookies
-  const cookieStore = cookies();
-  const dataToken = (await cookieStore).get("accessToken")?.value;
-
-  // Check if access token is missing
-  if (!dataToken) {
-    return NextResponse.json(
-      { error: "Access token is missing" },
-      { status: 401 }
-    );
-  }
-
-  let decoded;
   try {
-    // Decode and verify the JWT token to extract the user details (name and id)
-    decoded = jwt.verify(
-      dataToken,
-      process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ?? ""
-    ) as { name: string; userId: number };
-    console.log("Decoded Token:", decoded); // Log the decoded token for inspection
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Invalid or expired token" },
-      { status: 401 }
-    );
-  }
+    // 1. AUTH & RBAC Check: Admin Only
+    const session = await verifySession("ADMIN");
+    if (session instanceof NextResponse) return session;
 
-  try {
-    // Get the body data from the request
-    const data = await req.json();
+    const { payload } = session;
+
+    const body = await req.json();
+
+    // 2. Validate input
+    const validation = UserCreateSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
 
     // Check if the username already exists in the database
     const user = await prisma.user.findFirst({
@@ -52,36 +42,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
     // Create a new user in the database
-    const newUser = await prisma.user.create({
+    const roleName = data.role || "USER";
+
+    await prisma.user.create({
       data: {
         usernamegithub: data.username,
-        password: data.password, // Make sure to hash the password before saving
+        password: hashedPassword,
         nama: data.name,
         email: data.email,
         position: data.position,
-        role: data.role,
+        roles: {
+          create: {
+            role: {
+              connect: {
+                name: roleName,
+              },
+            },
+          },
+        },
       },
     });
 
-    // Log the activity for the user who is performing the action
+    // Log the activity
     await prisma.logActivity.create({
       data: {
-        userId: decoded.userId, // Correctly passing userId extracted from JWT
-        activity: `Created user ${data.username}`, // Log message
+        userId: payload.sub,
+        activity: `Admin created user ${data.username}`,
       },
     });
 
     // Return a success response
     return NextResponse.json(
-      { message: "Pengguna berhasil dibuat", status: 200 },
-      { status: 200 }
+      { message: "Pengguna berhasil dibuat", status: 201 },
+      { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating user:", error); // Log the error for debugging purposes
+    console.error("Error creating user:", error);
     return NextResponse.json(
-      { error: "Invalid JSON or internal server error" },
-      { status: 400 }
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
 }

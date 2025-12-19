@@ -1,6 +1,6 @@
 "use client";
 
-import useGetToken from "@/hooks/useGetToken";
+// import useGetToken from "@/hooks/useGetToken";
 import { canAccess } from "@/lib/canAccsess";
 import { usePathname, useRouter } from "next/navigation";
 import React, { Suspense, useMemo, useEffect } from "react";
@@ -14,19 +14,15 @@ export default function ProtectedRoute({
 }) {
   const path = usePathname();
   const router = useRouter();
-  const { decode } = useGetToken();
-  const { isLoading, permissions } = usePermission();
+  // const { decode } = useGetToken(); // ❌ Cannot use httpOnly cookie
+  const { isLoading, permissions, roles } = usePermission();
 
   const isPermission = useMemo(() => {
     // 🔹 Auto allow kalau development mode
     if (process.env.NEXT_PUBLIC_MODE === "UI") return true;
 
-    return (
-      decode?.role &&
-      permissions &&
-      canAccess(path, [decode?.role], permissions)
-    );
-  }, [decode?.role, path, permissions]);
+    return roles && roles.length > 0 && canAccess(path, roles, permissions);
+  }, [roles, path, permissions]);
 
   // 🔹 Redirect manual kalau tidak punya akses
   useEffect(() => {

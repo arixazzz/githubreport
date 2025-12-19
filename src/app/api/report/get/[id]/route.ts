@@ -1,64 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { verifySession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params; // Retrieve the projectId from the URL parameters
+    const { id } = await context.params;
+    const projectId = Number(id);
 
-    // Retrieve the access token from cookies
-    const cookieStore = cookies();
-    const dataToken = (await cookieStore).get("accessToken")?.value;
-
-    if (!dataToken) {
+    if (isNaN(projectId)) {
       return NextResponse.json(
-        { error: "Access token is missing" },
-        { status: 401 }
+        { error: "Invalid Project ID" },
+        { status: 400 }
       );
     }
 
-    // Decode the JWT token
-    let decoded;
-    try {
-      decoded = jwt.verify(
-        dataToken,
-        process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ?? ""
-      ) as { name: string; userId: number };
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 }
-      );
-    }
+    // 1. AUTH & RBAC Verification
+    const session = await verifySession();
+    if (session instanceof NextResponse) return session;
 
-    // Fetch reports for the specific project and the current user
+    const { payload } = session;
+    const userId = payload.sub;
+    const isAdmin = payload.roles.includes("ADMIN");
+
+    // 2. Fetch Reports with RBAC
+    // Admin: Get all reports for the project
+    // User: Only get reports they created for the project
     const reports = await prisma.report.findMany({
       where: {
-        projectId: Number(id), // Fetch reports by projectId
-        userId: decoded.userId, // Ensure we only get reports for the logged-in user
+        projectId: projectId,
+        ...(isAdmin ? {} : { userId: userId }),
       },
       include: {
-        project: true, // Include related project data
-        user: true, // Include related user data
+        project: {
+          select: {
+            id: true,
+            title: true,
+            githubRepo: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            nama: true,
+            email: true,
+            position: true,
+          },
+        },
+      },
+      orderBy: {
+        commitDate: "desc",
       },
     });
 
-    if (!reports || reports.length === 0) {
-      return NextResponse.json(
-        { error: "No reports found for this project" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ reports, status: 200 }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching reports by project:", error); // Log error for debugging
+    return NextResponse.json(
+      {
+        reports,
+        status: 200,
+        metadata: {
+          total: reports.length,
+          isAdmin,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error fetching reports:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
