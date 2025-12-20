@@ -47,31 +47,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. CREATE PROJECT
-    const project = await prisma.project.create({
-      data: {
-        title,
-        detail,
-        deadline: new Date(deadline),
-        stack,
-        githubOwner,
-        githubRepo: repoName,
-        visibility,
-      },
-    });
+    // 4. CREATE PROJECT & ASSIGN DEVELOPERS
+    const result = await prisma.$transaction(async (tx) => {
+      // Create Project
+      const project = await tx.project.create({
+        data: {
+          title,
+          detail,
+          deadline: new Date(deadline),
+          stack,
+          githubOwner,
+          githubRepo: repoName,
+          visibility,
+        },
+      });
 
-    // 5. LOG ACTIVITY
-    await prisma.logActivity.create({
-      data: {
-        userId: payload.sub,
-        activity: `User created new project: ${title} (${githubOwner}/${repoName})`,
-      },
+      // Assign Developers if any
+      if (validation.data.userIds && validation.data.userIds.length > 0) {
+        await tx.projectDeveloper.createMany({
+          data: validation.data.userIds.map((userId) => ({
+            projectId: project.id,
+            userId: userId,
+          })),
+        });
+      }
+
+      // 5. LOG ACTIVITY
+      await tx.logActivity.create({
+        data: {
+          userId: payload.sub,
+          activity: `User created new project: ${title} (${githubOwner}/${repoName})`,
+        },
+      });
+
+      return project;
     });
 
     return NextResponse.json(
       {
         message: "Project berhasil dibuat",
-        project,
+        project: result,
       },
       { status: 201 }
     );

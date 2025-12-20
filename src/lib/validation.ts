@@ -25,6 +25,7 @@ export const ProjectSchema = z.object({
     .string()
     .regex(/^[\w.-]+\/[\w.-]+$/, "Format Repository harus owner/repo"),
   visibility: z.enum(["PUBLIC", "PRIVATE"]).optional().default("PUBLIC"),
+  userIds: z.array(z.number()).optional(),
 });
 
 export const ReportSchema = z.object({
