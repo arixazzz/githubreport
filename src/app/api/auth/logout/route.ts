@@ -4,9 +4,10 @@ import { cookies } from "next/headers";
 export const runtime = "nodejs";
 
 export async function POST() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
-  (await cookieStore).delete("accessToken");
+  cookieStore.delete("accessToken");
+  cookieStore.delete("githubToken");
 
   return NextResponse.json({ message: "Logout berhasil" }, { status: 200 });
 }

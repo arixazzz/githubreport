@@ -1,62 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
+import { verifySession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
-interface AccessTokenPayload {
-  sub: number;
-  roles: string[];
-  permissions: string[];
-}
-
-function isAccessTokenPayload(payload: unknown): payload is AccessTokenPayload {
-  return (
-    typeof payload === "object" &&
-    payload !== null &&
-    "sub" in payload &&
-    "roles" in payload &&
-    "permissions" in payload
-  );
-}
-
 export async function POST(req: NextRequest) {
   try {
-    // ===============================
-    // 1. AMBIL TOKEN
-    // ===============================
-    const cookieStore = cookies();
-    const token = (await cookieStore).get("accessToken")?.value;
+    // 1. AUTH & SESSION
+    const session = await verifySession();
+    if (session instanceof NextResponse) return session;
 
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { payload } = session;
 
-    // ===============================
-    // 2. VERIFY JWT
-    // ===============================
-    const raw = jwt.verify(token, process.env.NEXTAUTH_SECRET || "");
-
-    if (!isAccessTokenPayload(raw)) {
-      return NextResponse.json(
-        { error: "Invalid token structure" },
-        { status: 401 }
-      );
-    }
-
-    const decoded = raw;
-
-    // ===============================
-    // 3. GET REQUEST BODY
-    // ===============================
+    // 2. GET REQUEST BODY
     const body = await req.json();
     const { password, position } = body;
 
-    // ===============================
-    // 4. VALIDASI INPUT
-    // ===============================
+    // 3. VALIDASI INPUT
     if (!password || password.length < 6) {
       return NextResponse.json(
         { error: "Password minimal 6 karakter" },
@@ -71,35 +32,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ===============================
-    // 5. HASH PASSWORD
-    // ===============================
+    // 4. HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ===============================
-    // 6. UPDATE USER
-    // ===============================
+    // 5. UPDATE USER
     const updatedUser = await prisma.user.update({
-      where: { id: decoded.sub },
+      where: { id: payload.sub },
       data: {
         password: hashedPassword,
         position: position.trim(),
       },
     });
 
-    // ===============================
-    // 7. LOG ACTIVITY
-    // ===============================
+    // 6. LOG ACTIVITY
     await prisma.logActivity.create({
       data: {
-        userId: decoded.sub,
+        userId: payload.sub,
         activity: `User ${updatedUser.usernamegithub} completed profile`,
       },
     });
 
-    // ===============================
-    // 8. RESPONSE
-    // ===============================
+    // 7. RESPONSE (Safe: no hash)
     return NextResponse.json(
       {
         message: "Profil berhasil dilengkapi",

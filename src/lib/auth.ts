@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { verifyJwt } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -10,12 +10,7 @@ export interface AccessTokenPayload {
 
 export function verifyAccessToken(token: string): AccessTokenPayload | null {
   try {
-    const secret = process.env.NEXTAUTH_SECRET || "";
-    if (process.env.NODE_ENV === "production" && !secret) {
-      console.error("CRITICAL: NEXTAUTH_SECRET is missing in production");
-      return null;
-    }
-    const decoded = jwt.verify(token, secret);
+    const decoded = verifyJwt(token);
 
     if (
       typeof decoded === "object" &&

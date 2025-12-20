@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
       permissions,
     });
 
-    const cookieStore = cookies();
-    (await cookieStore).set("accessToken", token, {
-      httpOnly: true,
+    const cookieStore = await cookies();
+    cookieStore.set("accessToken", token, {
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",

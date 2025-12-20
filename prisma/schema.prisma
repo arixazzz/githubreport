@@ -59,8 +59,8 @@ model RolePermission {
 model Project {
   id            Int      @id @default(autoincrement())
   title         String
-  detail        String
-  stack         String
+  detail        String?
+  stack         String?
   deadline      DateTime
   githubOwner   String
   githubRepo    String

@@ -218,7 +218,7 @@ export async function GET(req: Request) {
   // ===============================
   const cookieStore = await cookies();
   cookieStore.set("accessToken", token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
@@ -227,7 +227,7 @@ export async function GET(req: Request) {
 
   // Set GitHub access token for API calls (commits etc)
   cookieStore.set("githubToken", tokenData.access_token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
