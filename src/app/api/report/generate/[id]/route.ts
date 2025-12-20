@@ -141,7 +141,7 @@ export async function POST(
             {
               role: "system",
               content:
-                "Buat ringkasan aktivitas harian developer di proyek ini dalam Bahasa Indonesia. Fokus pada apa yang dicapai hari ini berdasarkan pesan commit. Gunakan poin-poin singkat (maksimal 4). Berikan penutup yang menyemangati.",
+                "Buat ringkasan aktivitas harian developer di proyek ini dalam Bahasa Indonesia. Fokus pada apa yang dicapai hari ini berdasarkan pesan commit. Gunakan poin-poin singkat (maksimal 4).",
             },
             {
               role: "user",

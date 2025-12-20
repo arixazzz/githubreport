@@ -4,9 +4,9 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 export async function seedAdmin() {
-  const ADMIN_EMAIL = "bulindev@gmail.com";
-  const ADMIN_GITHUB = "bulindev";
-  const ADMIN_PASSWORD = "BulinDev12345!";
+  const ADMIN_EMAIL = "arikaadini@gmail.com";
+  const ADMIN_GITHUB = "arixazzz";
+  const ADMIN_PASSWORD = "Admin123!";
   const adminRole = await prisma.role.findUnique({
     where: { name: "ADMIN" },
   });
