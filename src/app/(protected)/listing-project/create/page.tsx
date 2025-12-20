@@ -58,9 +58,18 @@ export default function Page() {
   }, []);
 
   const onSubmit = async (data: any) => {
+    console.log("Raw Form Data:", data);
+    console.log("Developers Type:", typeof data.developers);
+    console.log("Developers Value:", data.developers);
+
     try {
       // Format payload to match backend schema
-      // Format payload to match backend schema
+      // Handle potential existing owner in repo name
+      let finalRepo = data.githubRepo;
+      if (!finalRepo.includes("/") && data.githubOwner) {
+        finalRepo = `${data.githubOwner}/${finalRepo}`;
+      }
+
       const payload = {
         title: data.title,
         detail: data.detail,
@@ -68,7 +77,7 @@ export default function Page() {
         stack: data.stack,
         visibility: data.visibility || "PUBLIC",
         // Combine owner and repo for validation
-        githubRepo: `${data.githubOwner}/${data.githubRepo}`,
+        githubRepo: finalRepo,
         // Map developers to userIds and ensure they are numbers
         userIds: data.developers.map((id: any) => Number(id)),
       };
@@ -87,11 +96,39 @@ export default function Page() {
         alert(result.message);
         router.push("/listing-project");
       } else {
-        alert(result.error || "Something went wrong");
+        let errorMessage = result.error || "Something went wrong";
+
+        // Show detailed validation errors if available
+        if (result.details) {
+          if (
+            typeof result.details === "object" &&
+            !Array.isArray(result.details) &&
+            result.details !== null
+          ) {
+            const validationErrors = Object.entries(result.details)
+              .map(([key, value]: [string, any]) => {
+                if (value && value._errors && Array.isArray(value._errors)) {
+                  return `${key}: ${value._errors.join(", ")}`;
+                }
+                return null;
+              })
+              .filter(Boolean)
+              .join("\n");
+
+            if (validationErrors) {
+              errorMessage += `\n\n${validationErrors}`;
+            }
+          } else {
+            errorMessage += `\n${JSON.stringify(result.details)}`;
+          }
+        }
+
+        alert(errorMessage);
+        console.error("Submission Error Details:", result);
       }
     } catch (error) {
       console.error("Error submitting data:", error);
-      alert("Terjadi kesalahan sistem");
+      alert("Terjadi kesalahan sistem. Silakan coba lagi.");
     }
   };
   return (
@@ -132,7 +169,7 @@ export default function Page() {
                   users.length > 0
                     ? users.map((user) => ({
                         label: `${user.nama} (${user.position})`,
-                        value: user.id,
+                        value: String(user.id),
                       }))
                     : [
                         {
