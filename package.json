@@ -24,7 +24,7 @@
     "lint:folder": "node scripts/check-folder-case.cjs",
     "lint:structure": "node scripts/check-folder-case.cjs",
     "lint:zodmix": "node scripts/check-validation-mix.cjs",
-    "prepare": "husky install",
+    "prepare": "husky || true",
     "commit": "cz",
     "translate:en": "tsx scripts/translate.ts messages/id.json messages/en.json id en",
     "generate:routes": "tsx scripts/generate-protected-routes.ts",
