@@ -58,10 +58,6 @@ export default function Page() {
   }, []);
 
   const onSubmit = async (data: any) => {
-    console.log("Raw Form Data:", data);
-    console.log("Developers Type:", typeof data.developers);
-    console.log("Developers Value:", data.developers);
-
     try {
       // Format payload to match backend schema
       // Handle potential existing owner in repo name
