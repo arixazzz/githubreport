@@ -59,17 +59,31 @@ export default function Page() {
 
   const onSubmit = async (data: any) => {
     try {
+      // Format payload to match backend schema
+      // Format payload to match backend schema
+      const payload = {
+        title: data.title,
+        detail: data.detail,
+        deadline: data.deadline,
+        stack: data.stack,
+        visibility: data.visibility || "PUBLIC",
+        // Combine owner and repo for validation
+        githubRepo: `${data.githubOwner}/${data.githubRepo}`,
+        // Map developers to userIds and ensure they are numbers
+        userIds: data.developers.map((id: any) => Number(id)),
+      };
+
       const response = await fetch("/api/project/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
 
-      if (result.status === 200) {
+      if (response.ok) {
         alert(result.message);
         router.push("/listing-project");
       } else {
@@ -77,6 +91,7 @@ export default function Page() {
       }
     } catch (error) {
       console.error("Error submitting data:", error);
+      alert("Terjadi kesalahan sistem");
     }
   };
   return (
