@@ -15,8 +15,13 @@ export async function POST(req: NextRequest) {
 
     // 2. VALIDASI INPUT
     const body = await req.json();
+    console.log("DEBUG: Received Body:", JSON.stringify(body, null, 2));
 
     const validation = ProjectSchema.safeParse(body);
+
+    if (validation.success) {
+      console.log("DEBUG: Validated userIds:", validation.data.userIds);
+    }
 
     if (!validation.success) {
       console.error("Validation Error:", validation.error.format());
@@ -65,13 +70,20 @@ export async function POST(req: NextRequest) {
       });
 
       // Assign Developers if any
+      console.log(
+        "DEBUG: Checking userIds for assignment:",
+        validation.data.userIds
+      );
       if (validation.data.userIds && validation.data.userIds.length > 0) {
-        await tx.projectDeveloper.createMany({
+        const assignment = await tx.projectDeveloper.createMany({
           data: validation.data.userIds.map((userId) => ({
             projectId: project.id,
             userId: userId,
           })),
         });
+        console.log("DEBUG: Assignment success, count:", assignment.count);
+      } else {
+        console.log("DEBUG: No userIds to assign");
       }
 
       // 5. LOG ACTIVITY

@@ -75,8 +75,10 @@ export default function Page() {
         // Combine owner and repo for validation
         githubRepo: finalRepo,
         // Map developers to userIds and ensure they are numbers
-        userIds: data.developers.map((id: any) => Number(id)),
+        userIds: (data.developers || []).map((id: any) => Number(id)),
       };
+
+      console.log("DEBUG: Sending Payload:", JSON.stringify(payload, null, 2));
 
       const response = await fetch("/api/project/create", {
         method: "POST",
@@ -86,13 +88,15 @@ export default function Page() {
         body: JSON.stringify(payload),
       });
 
+      console.log("DEBUG: Response Status:", response.status);
       const result = await response.json();
+      console.log("DEBUG: Response Result:", result);
 
       if (response.ok) {
         alert(result.message);
         router.push("/listing-project");
       } else {
-        let errorMessage = result.error || "Something went wrong";
+        let errorMessage = `Error (${response.status}): ${result.error || "Something went wrong"}`;
 
         // Show detailed validation errors if available
         if (result.details) {
@@ -124,7 +128,7 @@ export default function Page() {
       }
     } catch (error) {
       console.error("Error submitting data:", error);
-      alert("Terjadi kesalahan sistem. Silakan coba lagi.");
+      alert(`Terjadi kesalahan sistem: ${error}`);
     }
   };
   return (
