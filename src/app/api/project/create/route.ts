@@ -15,9 +15,11 @@ export async function POST(req: NextRequest) {
 
     // 2. VALIDASI INPUT
     const body = await req.json();
+
     const validation = ProjectSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error("Validation Error:", validation.error.format());
       return NextResponse.json(
         { error: "Validation failed", details: validation.error.format() },
         { status: 400 }
