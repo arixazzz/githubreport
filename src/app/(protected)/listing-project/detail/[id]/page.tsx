@@ -25,7 +25,8 @@ interface Project {
   }[];
 }
 
-const Page = ({ params }: { params: { id: string } }) => {
+const Page = (props: { params: Promise<{ id: string }> }) => {
+  const params = React.use(props.params);
   const { id } = params;
 
   const [data, setData] = useState<Project | null>(null);

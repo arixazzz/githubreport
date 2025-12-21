@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params; // Get 'id' from the route parameters
+  const { id } = await context.params; // Get 'id' from the route parameters
 
   if (!id) {
     return NextResponse.json({ error: "ID is required" }, { status: 400 });

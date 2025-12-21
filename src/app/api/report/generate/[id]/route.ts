@@ -44,8 +44,12 @@ export async function POST(
     // 3. New Request Body: date & developerId (Admin only)
     const body = await req.json().catch(() => ({}));
     const targetDateStr = body.date || new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    const targetDate = new Date(targetDateStr);
-    targetDate.setHours(0, 0, 0, 0);
+
+    // FIX: Parse date explicitly as UTC Midnight for DB storage.
+    // This prevents local timezone (setHours) from shifting it to the previous day in UTC.
+    // E.g., "2025-12-21" -> UTC 2025-12-21T00:00:00.000Z (instead of 2025-12-20T17:00:00.000Z in WIB)
+    const [y, m, d] = targetDateStr.split("-").map(Number);
+    const targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
 
     let targetUserId = userId;
     let githubAuthor = "";
