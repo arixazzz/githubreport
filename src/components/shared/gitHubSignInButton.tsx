@@ -6,8 +6,7 @@ export function GitHubSignInButton() {
   const clientId = process.env.NEXT_PUBLIC_GITHUB_ID!;
 
   const handleGitHubLogin = () => {
-    // const redirectUri = `${window.location.origin}/api/auth/github`;
-    const redirectUri = "http://localhost:3000/api/auth/github";
+    const redirectUri = `${window.location.origin}/api/auth/github`;
 
     const githubLoginUrl =
       `https://github.com/login/oauth/authorize` +
