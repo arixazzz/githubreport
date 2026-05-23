@@ -188,12 +188,13 @@ export default function Page() {
               <CustomFormInput<any>
                 name="githubOwner"
                 label="GitHub Owner"
-                placeholder="e.g. facebook"
+                placeholder="masukkan username github"
               />
               <CustomFormInput<any>
                 name="githubRepo"
                 label="GitHub Repository"
                 placeholder="e.g. react"
+                description="masukkan nama repo"
               />
               <CustomFormSelect
                 label="Visibility"
