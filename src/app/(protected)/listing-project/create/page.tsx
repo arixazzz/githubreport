@@ -59,22 +59,13 @@ export default function Page() {
 
   const onSubmit = async (data: any) => {
     try {
-      // Format payload to match backend schema
-      // Handle potential existing owner in repo name
-      let finalRepo = data.githubRepo;
-      if (!finalRepo.includes("/") && data.githubOwner) {
-        finalRepo = `${data.githubOwner}/${finalRepo}`;
-      }
-
       const payload = {
         title: data.title,
         detail: data.detail,
         deadline: data.deadline,
         stack: data.stack,
         visibility: data.visibility || "PUBLIC",
-        // Combine owner and repo for validation
-        githubRepo: finalRepo,
-        // Map developers to userIds and ensure they are numbers
+        githubRepo: data.githubRepo,
         userIds: (data.developers || []).map((id: any) => Number(id)),
       };
 
@@ -186,15 +177,9 @@ export default function Page() {
                 type="date"
               />
               <CustomFormInput<any>
-                name="githubOwner"
-                label="GitHub Owner"
-                placeholder="masukkan username github"
-              />
-              <CustomFormInput<any>
                 name="githubRepo"
-                label="GitHub Repository"
-                placeholder="e.g. react"
-                description="masukkan nama repo"
+                label="Repository (Owner/Repo)"
+                placeholder="e.g. username/repo tanpa .git"
               />
               <CustomFormSelect
                 label="Visibility"
