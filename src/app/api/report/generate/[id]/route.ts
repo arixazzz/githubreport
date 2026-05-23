@@ -89,6 +89,16 @@ export async function POST(
     const until = new Date(targetDateStr);
     until.setHours(23, 59, 59, 999);
 
+    // DEBUG: Log values being used so we can diagnose 404 errors quickly
+    console.log("[report/generate] GitHub API Debug:", {
+      repoOwner,
+      repoName,
+      githubAuthor,
+      targetDateStr,
+      since: since.toISOString(),
+      until: until.toISOString(),
+    });
+
     const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?author=${githubAuthor}&since=${since.toISOString()}&until=${until.toISOString()}`;
 
     const commitsRes = await fetch(githubApiUrl, {
@@ -100,9 +110,14 @@ export async function POST(
 
     if (!commitsRes.ok) {
       const errorData = await commitsRes.json();
+      console.error("[report/generate] GitHub API Error:", {
+        status: commitsRes.status,
+        message: errorData.message,
+        githubApiUrl,
+      });
       return NextResponse.json(
         {
-          error: `GitHub API Error: ${errorData.message || "Failed to fetch commits"}`,
+          error: `GitHub API Error: ${errorData.message || "Failed to fetch commits"} (repo: ${repoOwner}/${repoName}, author: ${githubAuthor})`,
         },
         { status: commitsRes.status }
       );
