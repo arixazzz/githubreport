@@ -86,7 +86,12 @@ interface AccessTokenPayload {
 // Define protected routes manually
 // All routes except public ones require authentication
 function isProtected(pathname: string): boolean {
-  const publicRoutes = ["/login", "/complete-profile", "/unauthorized"];
+  const publicRoutes = [
+    "/login",
+    "/complete-profile",
+    "/unauthorized",
+    "/model-test",
+  ];
 
   // Check if it's a public route
   const isPublic = publicRoutes.some(
@@ -112,6 +117,8 @@ export function middleware(request: NextRequest) {
     pathname === "/login" ||
     pathname === "/complete-profile" ||
     pathname === "/unauthorized" ||
+    pathname === "/model-test" ||
+    pathname.startsWith("/model-test/") ||
     pathname.startsWith("/api")
   ) {
     // Sudah login tapi buka /login

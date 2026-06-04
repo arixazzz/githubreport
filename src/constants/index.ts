@@ -75,6 +75,7 @@ import { NavItem } from "@/types/interface";
 import {
   Bell,
   DockIcon,
+  FlaskConical,
   Image,
   LayoutDashboard,
   List,
@@ -129,6 +130,11 @@ export const getNavData = (userRole: string): navDateType => {
       url: "/log-aktivitas",
       icon: Notebook,
     },
+    {
+      title: "Test Model",
+      url: "/model-test",
+      icon: FlaskConical,
+    },
   ];
 
   const userNavItems = [
@@ -146,6 +152,11 @@ export const getNavData = (userRole: string): navDateType => {
       title: "Log Aktivitas",
       url: "/log-aktivitas",
       icon: Notebook,
+    },
+    {
+      title: "Test Model",
+      url: "/model-test",
+      icon: FlaskConical,
     },
   ];
 
