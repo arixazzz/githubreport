@@ -5,6 +5,78 @@ import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
+async function fetchCommitDiff(
+  repoOwner: string,
+  repoName: string,
+  sha: string,
+  githubToken: string
+): Promise<
+  {
+    filename: string;
+    status: string;
+    additions: number;
+    deletions: number;
+    patch?: string;
+  }[]
+> {
+  const res = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/commits/${sha}`,
+    {
+      headers: {
+        Authorization: `Bearer ${githubToken}`,
+        "User-Agent": "Next.js-App",
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.files || []).map((f: any) => ({
+    filename: f.filename,
+    status: f.status,
+    additions: f.additions || 0,
+    deletions: f.deletions || 0,
+    // Truncate very large patches to avoid token limits
+    patch: f.patch
+      ? f.patch.length > 3000
+        ? f.patch.substring(0, 3000) + "\n... [truncated]"
+        : f.patch
+      : undefined,
+  }));
+}
+
+function buildCodeContext(
+  commits: any[],
+  fileDiffs: Record<
+    string,
+    ReturnType<typeof fetchCommitDiff> extends Promise<infer T> ? T : never
+  >
+): string {
+  return commits
+    .map((c: any) => {
+      const sha = c.sha;
+      const message = c.commit.message;
+      const files = fileDiffs[sha] || [];
+
+      const fileSection = files
+        .filter((f) => f.patch)
+        .map(
+          (f) =>
+            `diff --git a/${f.filename} b/${f.filename}\n` +
+            `--- Status: ${f.status} | +${f.additions} -${f.deletions}\n` +
+            f.patch
+        )
+        .join("\n\n");
+
+      return (
+        `commit ${sha.substring(0, 7)}\n` +
+        `Message: ${message}\n` +
+        (fileSection ? `\n${fileSection}` : "")
+      );
+    })
+    .join("\n\n══════════════════════════════\n\n");
+}
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -41,13 +113,11 @@ export async function POST(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // 3. New Request Body: date & developerId (Admin only)
+    // 3. Parse Request Body
     const body = await req.json().catch(() => ({}));
-    const targetDateStr = body.date || new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const targetDateStr = body.date || new Date().toISOString().split("T")[0];
+    const isRegenerate = body.regenerate === true;
 
-    // FIX: Parse date explicitly as UTC Midnight for DB storage.
-    // This prevents local timezone (setHours) from shifting it to the previous day in UTC.
-    // E.g., "2025-12-21" -> UTC 2025-12-21T00:00:00.000Z (instead of 2025-12-20T17:00:00.000Z in WIB)
     const [y, m, d] = targetDateStr.split("-").map(Number);
     const targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
 
@@ -58,7 +128,7 @@ export async function POST(
       targetUserId = Number(body.developerId);
     }
 
-    // Get GitHub Username of the target user
+    // 4. Get GitHub Username of the target user
     const targetUser = await prisma.user.findUnique({
       where: { id: targetUserId },
       select: { usernamegithub: true, nama: true },
@@ -79,32 +149,31 @@ export async function POST(
       );
     }
 
-    // 4. Fetch GitHub Commits for the Specific Day and Author
+    // 5. Fetch GitHub Commits for the Specific Day and Author
     const repoOwner = project.githubOwner;
     const repoName = project.githubRepo;
 
-    // Set since and until for the day
-    const since = new Date(targetDateStr);
-    since.setHours(0, 0, 0, 0);
-    const until = new Date(targetDateStr);
-    until.setHours(23, 59, 59, 999);
+    // Use WIB timezone range (UTC+7)
+    const since = new Date(`${targetDateStr}T00:00:00+07:00`).toISOString();
+    const until = new Date(`${targetDateStr}T23:59:59+07:00`).toISOString();
 
-    // DEBUG: Log values being used so we can diagnose 404 errors quickly
     console.log("[report/generate] GitHub API Debug:", {
       repoOwner,
       repoName,
       githubAuthor,
       targetDateStr,
-      since: since.toISOString(),
-      until: until.toISOString(),
+      since,
+      until,
+      isRegenerate,
     });
 
-    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?author=${githubAuthor}&since=${since.toISOString()}&until=${until.toISOString()}`;
+    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/commits?author=${githubAuthor}&since=${since}&until=${until}&per_page=20`;
 
     const commitsRes = await fetch(githubApiUrl, {
       headers: {
         Authorization: `Bearer ${githubToken}`,
         "User-Agent": "Next.js-App",
+        Accept: "application/vnd.github.v3+json",
       },
     });
 
@@ -133,18 +202,74 @@ export async function POST(
       );
     }
 
-    // Collect all commit messages for the summary
-    const commitMessages = commits.map((c: any) => c.commit.message).join("\n");
     const latestSha = commits[0].sha;
 
-    // 5. Call AI (Groq) for Summary of the day's activity
-    const groqApiKey = process.env.GROQ_API_KEY; // Only use secure key
+    // 6. Fetch diff for each commit (up to 5 commits, 8 files each)
+    const diffsMap: Record<string, any[]> = {};
+    const commitSlice = commits.slice(0, 5);
+    await Promise.all(
+      commitSlice.map(async (c: any) => {
+        diffsMap[c.sha] = await fetchCommitDiff(
+          repoOwner,
+          repoName,
+          c.sha,
+          githubToken
+        );
+      })
+    );
+
+    // 7. Build rich code context
+    const codeContext = buildCodeContext(commitSlice, diffsMap as any);
+
+    // Also build simple commit message list for the prompt header
+    const commitSummary = commitSlice
+      .map(
+        (c: any, i: number) =>
+          `${i + 1}. [${c.sha.substring(0, 7)}] ${c.commit.message.split("\n")[0]}`
+      )
+      .join("\n");
+
+    // Count total stats
+    const totalFiles = Object.values(diffsMap).flat().length;
+    const totalAdditions = Object.values(diffsMap)
+      .flat()
+      .reduce((a, f) => a + f.additions, 0);
+    const totalDeletions = Object.values(diffsMap)
+      .flat()
+      .reduce((a, f) => a + f.deletions, 0);
+
+    // 8. Call AI (Groq) with comprehensive prompt
+    const groqApiKey = process.env.GROQ_API_KEY;
     if (!groqApiKey) {
       return NextResponse.json(
         { error: "Server configuration error: AI Key missing" },
         { status: 500 }
       );
     }
+
+    const systemPrompt = `Anda adalah asisten teknis yang bertugas membuat ringkasan aktivitas harian developer dalam Bahasa Indonesia berdasarkan commit GitHub dan perubahan kode (code diff) yang diberikan.
+
+Tugas Anda adalah menganalisis setiap perubahan secara menyeluruh, lalu membuat ringkasan yang fokus pada apa yang dicapai hari ini (fitur baru, perbaikan bug, refactoring, dll).
+
+Aturan Format Output:
+1. Hanya gunakan format poin-poin singkat menggunakan simbol • (maksimal 4 poin).
+2. Setiap poin harus jelas, padat, dan langsung menjelaskan inti perubahan kode.
+3. Jangan menyertakan judul, teks pengantar, statistik commit/baris, nama developer, tanggal, header, atau bagian detail teknis lainnya.
+4. Output harus berupa daftar poin-poin langsung.`;
+
+    const userContent = `Proyek: ${project.title}
+Developer: ${targetUser.nama} (@${githubAuthor})
+Tanggal: ${targetDateStr}
+Statistik: ${commitSlice.length} commit · ${totalFiles} file diubah · +${totalAdditions} / -${totalDeletions} baris
+
+Daftar Commit:
+${commitSummary}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PERUBAHAN KODE LENGKAP (Code Diff):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${codeContext}`;
 
     const groqRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -157,16 +282,11 @@ export async function POST(
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            {
-              role: "system",
-              content:
-                "Buat ringkasan aktivitas harian developer di proyek ini dalam Bahasa Indonesia. Fokus pada apa yang dicapai hari ini berdasarkan pesan commit. Gunakan poin-poin singkat (maksimal 4).",
-            },
-            {
-              role: "user",
-              content: `Informasi Proyek: ${project.title}\nDeveloper: ${targetUser.nama}\nTanggal: ${targetDateStr}\n\nPesan Commits:\n${commitMessages}`,
-            },
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
           ],
+          max_tokens: 2048,
+          temperature: 0.3,
         }),
       }
     );
@@ -181,7 +301,7 @@ export async function POST(
       groqJson.choices?.[0]?.message?.content ||
       "Gagal menghasilkan ringkasan.";
 
-    // 6. Save Report to Database (Unique per Project-User-Date)
+    // 9. Save/Update Report to Database (upsert = works for both generate & regenerate)
     const newReport = await prisma.report.upsert({
       where: {
         projectId_userId_commitDate: {
@@ -203,17 +323,18 @@ export async function POST(
       },
     });
 
-    // 7. Log Activity
+    // 10. Log Activity
+    const action = isRegenerate ? "Regenerated" : "Generated";
     await prisma.logActivity.create({
       data: {
         userId,
-        activity: `Generated daily report for ${targetUser.nama} on ${targetDateStr} for project: ${project.title}`,
+        activity: `${action} daily report for ${targetUser.nama} on ${targetDateStr} for project: ${project.title}`,
       },
     });
 
     return NextResponse.json(
       {
-        message: `Laporan harian untuk ${targetUser.nama} tanggal ${targetDateStr} berhasil dibuat`,
+        message: `Laporan harian untuk ${targetUser.nama} tanggal ${targetDateStr} berhasil ${isRegenerate ? "diperbarui" : "dibuat"}`,
         report: newReport,
       },
       { status: 201 }

@@ -13,14 +13,11 @@ import {
   CheckCheck,
   CircleAlert,
   ArrowRight,
-  Plus,
-  Minus,
   CalendarDays,
   User2,
   Layers,
+  AtSign,
 } from "lucide-react";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Project {
   id: number;
@@ -56,7 +53,7 @@ interface CommitDetail {
 
 interface FetchResult {
   project: { title: string; githubOwner: string; githubRepo: string };
-  user: { nama: string; usernamegithub: string };
+  user: { id: number | null; nama: string; usernamegithub: string };
   commits: CommitDetail[];
   existingSummary: string | null;
 }
@@ -75,14 +72,12 @@ interface EvalResult {
   feedback: string;
 }
 
-// ─── Utils ────────────────────────────────────────────────────────────────────
-
 function grade(s: number) {
-  if (s >= 9)
+  if (s >= 4)
     return { label: "Excellent", color: "#22c55e", bg: "rgba(34,197,94,.12)" };
-  if (s >= 7)
+  if (s >= 2.5)
     return { label: "Good", color: "#60a5fa", bg: "rgba(96,165,250,.12)" };
-  if (s >= 5)
+  if (s >= 2)
     return { label: "Fair", color: "#fbbf24", bg: "rgba(251,191,36,.12)" };
   return { label: "Poor", color: "#f87171", bg: "rgba(248,113,113,.12)" };
 }
@@ -99,8 +94,6 @@ function buildCodeContext(commits: CommitDetail[]): string {
     })
     .join("\n\n─────────────────────────\n\n");
 }
-
-// ─── Small components ─────────────────────────────────────────────────────────
 
 function DiffLine({ line }: { line: string }) {
   const isAdd = line.startsWith("+") && !line.startsWith("+++");
@@ -183,7 +176,7 @@ function FileRow({ file }: { file: CommitFile }) {
 
 function CommitCard({ commit }: { commit: CommitDetail }) {
   const [open, setOpen] = useState(false);
-  const date = new Date(commit.date).toLocaleTimeString("id-ID", {
+  const time = new Date(commit.date).toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -192,15 +185,15 @@ function CommitCard({ commit }: { commit: CommitDetail }) {
     <div className="border border-[#1a2035] rounded-lg overflow-hidden bg-[#07090f]">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center gap-3 px-4 py-2.5  transition-colors text-left"
+        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors text-left"
       >
-        <code className="text-[11px]  px-2 py-0.5 rounded shrink-0">
+        <code className="text-[11px] text-[#3b82f6] bg-[#1e3a5f]/30 px-2 py-0.5 rounded shrink-0">
           {commit.shortSha}
         </code>
         <span className="text-[13px] text-[#d1d5db] flex-1 truncate leading-snug">
           {commit.message.split("\n")[0]}
         </span>
-        <span className="text-[11px] text-[#374151] shrink-0">{date}</span>
+        <span className="text-[11px] text-[#374151] shrink-0">{time}</span>
         <span className="text-[11px] text-[#4ade80] ml-2">
           +{commit.additions}
         </span>
@@ -226,11 +219,10 @@ function CommitCard({ commit }: { commit: CommitDetail }) {
 
 function ScoreRow({ label, aspect }: { label: string; aspect: AspectScore }) {
   const g = grade(aspect.score);
-  const pct = (aspect.score / 10) * 100;
   return (
-    <div className="py-4 border-b border-[#1a2035] last:border-0">
+    <div className="py-4 border-b last:border-0">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[13px] text-[#9ca3af]">{label}</span>
+        <span className="text-[13px] ">{label}</span>
         <div className="flex items-center gap-2">
           <span
             className="text-[11px] px-2 py-0.5 rounded-full font-medium"
@@ -243,78 +235,71 @@ function ScoreRow({ label, aspect }: { label: string; aspect: AspectScore }) {
             style={{ color: g.color }}
           >
             {aspect.score}
-            <span className="text-[11px] text-[#374151] font-normal">/10</span>
+            <span className="text-[11px]  font-normal">/5</span>
           </span>
         </div>
       </div>
-      <div className="h-1 rounded-full bg-[#1a2035] overflow-hidden mb-2">
+      <div className="h-1 rounded-full  overflow-hidden mb-2">
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: g.color }}
+          style={{
+            width: `${(aspect.score / 5) * 100}%`,
+            backgroundColor: g.color,
+          }}
         />
       </div>
-      <p className="text-[12px] text-[#6b7280] leading-relaxed">
-        {aspect.reason}
-      </p>
+      <p className="text-[12px]  leading-relaxed">{aspect.reason}</p>
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function ModelTestPage() {
-  // Selectors
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [developers, setDevelopers] = useState<Developer[]>([]);
-  const [selectedUser, setSelectedUser] = useState<Developer | null>(null);
+  const [githubUsername, setGithubUsername] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
-  // Data
   const [fetchResult, setFetchResult] = useState<FetchResult | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [projectsLoading, setProjectsLoading] = useState(true);
 
-  // Evaluation
   const [summary, setSummary] = useState("");
   const [evalLoading, setEvalLoading] = useState(false);
   const [evalError, setEvalError] = useState<string | null>(null);
   const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
+  const datalistId = "dev-suggestions";
 
-  // ── Load projects from system ───────────────────────────────────────────────
   useEffect(() => {
-    setProjectsLoading(true);
     fetch("/api/project/get", { credentials: "include" })
       .then((r) => r.json())
-      .then((d) => {
-        const list: Project[] = d.project || [];
-        setProjects(list);
-      })
+      .then((d) => setProjects(d.project || []))
       .catch(() => {})
       .finally(() => setProjectsLoading(false));
   }, []);
 
-  // ── When project changes → set available developers ─────────────────────────
   useEffect(() => {
     if (!selectedProject) {
       setDevelopers([]);
-      setSelectedUser(null);
       return;
     }
     const devs = selectedProject.developers.map((d) => d.user);
     setDevelopers(devs);
-    setSelectedUser(devs.length === 1 ? devs[0] : null);
+    if (devs.length === 1 && !githubUsername) {
+      setGithubUsername(devs[0].usernamegithub);
+    }
     setFetchResult(null);
     setEvalResult(null);
     setFetchError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProject]);
 
   // ── Fetch commits ───────────────────────────────────────────────────────────
   const handleFetch = async () => {
-    if (!selectedProject || !selectedUser || !date) return;
+    if (!selectedProject || !githubUsername.trim() || !date) return;
     setFetchLoading(true);
     setFetchError(null);
     setFetchResult(null);
@@ -327,7 +312,7 @@ export default function ModelTestPage() {
         credentials: "include",
         body: JSON.stringify({
           projectId: selectedProject.id,
-          userId: selectedUser.id,
+          githubUsername: githubUsername.trim().replace(/^@/, ""),
           date,
         }),
       });
@@ -389,40 +374,39 @@ export default function ModelTestPage() {
   const commits = fetchResult?.commits ?? [];
   const totalAdd = commits.reduce((a, c) => a + c.additions, 0);
   const totalDel = commits.reduce((a, c) => a + c.deletions, 0);
-  const canFetch = selectedProject && selectedUser && date && !fetchLoading;
+  const canFetch =
+    selectedProject && githubUsername.trim() && date && !fetchLoading;
   const canEvaluate = commits.length > 0 && summary.trim() && !evalLoading;
+
+  // Matched developer info for display
+  const matchedDev = developers.find(
+    (d) =>
+      d.usernamegithub.toLowerCase() ===
+      githubUsername.trim().toLowerCase().replace(/^@/, "")
+  );
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto px-5 py-10 space-y-8">
-      {/* ── Panel 1: Selector ───────────────────────────────────────────────── */}
-      <div className="border  rounded-xl  overflow-hidden">
-        <div className="px-5 py-3 border-b flex items-center gap-2">
-          <Layers className="w-3.5 h-3.5 " />
-          <span className="text-[12px] font-semibold uppercase tracking-wider">
-            Konfigurasi
-          </span>
-        </div>
-
+    <div className="max-w-4xl mx-auto px-5 py-10 space-y-6">
+      <div className="rounded-xl overflow-hidden">
         <div className="p-5 grid md:grid-cols-3 gap-4">
-          {/* Project */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px]  font-medium flex items-center gap-1.5">
+            <label className="text-[11px] font-medium flex items-center gap-1.5">
               <Layers className="w-3 h-3" /> Project
             </label>
             {projectsLoading ? (
-              <div className="h-9  rounded-lg animate-pulse" />
+              <div className="h-9 rounded-lg animate-pulse" />
             ) : (
               <select
                 id="project-select"
                 value={selectedProject?.id ?? ""}
                 onChange={(e) => {
-                  const p =
+                  setSelectedProject(
                     projects.find((x) => x.id === Number(e.target.value)) ??
-                    null;
-                  setSelectedProject(p);
+                      null
+                  );
                 }}
-                className="rounded-lg px-3 py-2 text-[13px] border  outline-none transition-colors appearance-none cursor-pointer"
+                className=" border  rounded-lg px-3 py-2 text-[13px] outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="">Pilih project…</option>
                 {projects.map((p) => (
@@ -433,46 +417,52 @@ export default function ModelTestPage() {
               </select>
             )}
             {selectedProject && (
-              <span className="text-[10px]">
+              <span className="text-[10px] font-mono ">
                 {selectedProject.githubOwner}/{selectedProject.githubRepo}
               </span>
             )}
           </div>
 
-          {/* Developer */}
+          {/* Developer — free text input with datalist autocomplete */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium flex items-center gap-1.5">
-              <User2 className="w-3 h-3" /> Developer
-            </label>
-            <select
-              id="user-select"
-              value={selectedUser?.id ?? ""}
-              onChange={(e) => {
-                const u =
-                  developers.find((x) => x.id === Number(e.target.value)) ??
-                  null;
-                setSelectedUser(u);
-              }}
-              disabled={!selectedProject || developers.length === 0}
-              className="border disabled:opacity-40 disabled:cursor-not-allowed rounded-lg px-3 py-2 text-[13px] outline-none transition-colors appearance-none cursor-pointer"
+            <label
+              htmlFor="dev-input"
+              className="text-[11px]  font-medium flex items-center gap-1.5"
             >
-              <option value="">Pilih developer…</option>
-              {developers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.nama}
-                </option>
-              ))}
-            </select>
-            {selectedUser && (
-              <span className="text-[10px] font-mono ">
-                @{selectedUser.usernamegithub}
+              <User2 className="w-3 h-3" /> GitHub Username Developer
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 ">
+                <AtSign className="w-3.5 h-3.5" />
+              </span>
+              <input
+                id="dev-input"
+                type="text"
+                list={datalistId}
+                value={githubUsername}
+                onChange={(e) => setGithubUsername(e.target.value)}
+                placeholder="username atau pilih dari daftar"
+                autoComplete="off"
+                className="w-full border  rounded-lg pl-8 pr-3 py-2 text-[13px] outline-none transition-all"
+              />
+              <datalist id={datalistId}>
+                {developers.map((d) => (
+                  <option key={d.id} value={d.usernamegithub}>
+                    {d.nama}
+                  </option>
+                ))}
+              </datalist>
+            </div>
+            {developers.length > 0 && !githubUsername && (
+              <span className="text-[10px] ">
+                {developers.length} developer terdaftar di project ini
               </span>
             )}
           </div>
 
           {/* Date */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px]  font-medium flex items-center gap-1.5">
+            <label className="text-[11px] font-medium flex items-center gap-1.5">
               <CalendarDays className="w-3 h-3" /> Tanggal
             </label>
             <input
@@ -480,17 +470,18 @@ export default function ModelTestPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-[13px] outline-none transition-colors"
+              className="border rounded-lg px-3 py-2 text-[13px] outline-none transition-all"
             />
           </div>
         </div>
 
-        <div className="px-5 pb-4 flex items-center gap-3">
+        {/* Actions */}
+        <div className="px-5 pb-5 flex items-center gap-3">
           <button
             id="fetch-commits-btn"
             onClick={handleFetch}
             disabled={!canFetch}
-            className="flex items-center gap-2 bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-30 disabled:cursor-not-allowed text-white text-[13px] font-medium px-5 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 border  disabled:opacity-30 disabled:cursor-not-allowed  text-[13px] font-medium px-5 py-2 rounded-lg transition-colors"
           >
             {fetchLoading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -499,10 +490,11 @@ export default function ModelTestPage() {
             )}
             {fetchLoading ? "Mengambil commit…" : "Ambil Commit & Diff"}
           </button>
+
           {(fetchResult || fetchError) && (
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 text-[12px]  transition-colors"
+              className="flex items-center gap-1.5 text-[12px] transition-colors border px-5 py-2 rounded-lg"
             >
               <RotateCcw className="w-3 h-3" /> Reset
             </button>
@@ -517,33 +509,11 @@ export default function ModelTestPage() {
         )}
       </div>
 
-      {/* ── Panel 2: Commit diff viewer ─────────────────────────────────────── */}
-      {commits.length > 0 && (
-        <div className="border rounded-xl  overflow-hidden">
-          <div className="px-5 py-3 border-b flex items-center gap-3">
-            <GitCommit className="w-3.5 h-3.5 " />
-            <span className="text-[12px] font-semibold  uppercase tracking-wider">
-              Perubahan Kode
-            </span>
-            <div className="ml-auto flex items-center gap-3 text-[11px]">
-              <span>{commits.length} commit</span>
-              <span className="text-[#4ade80] tabular-nums">+{totalAdd}</span>
-              <span className="text-[#f87171] tabular-nums">−{totalDel}</span>
-            </div>
-          </div>
-          <div className="p-4 space-y-2">
-            {commits.map((c) => (
-              <CommitCard key={c.sha} commit={c} />
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ── Panel 3: Summary input ──────────────────────────────────────────── */}
       {commits.length > 0 && (
-        <div className="border  rounded-xl  overflow-hidden">
+        <div className="border rounded-xl overflow-hidden">
           <div className="px-5 py-3 border-b  flex items-center gap-2">
-            <span className="text-[12px] font-semibold  uppercase tracking-wider">
+            <span className="text-[12px] font-semibold uppercase tracking-wider">
               Summary untuk Dievaluasi
             </span>
             {fetchResult?.existingSummary && (
@@ -553,9 +523,9 @@ export default function ModelTestPage() {
             )}
           </div>
           <div className="p-5">
-            <p className="text-[12px]  mb-3">
-              Tempel ringkasan yang dihasilkan model AI sebelumnya (dari halaman
-              generate laporan).
+            <p className="text-[12px] mb-3">
+              Tempel ringkasan yang dihasilkan model AI (dari halaman generate
+              laporan).
             </p>
             <textarea
               id="summary-input"
@@ -566,12 +536,11 @@ export default function ModelTestPage() {
               className="w-full  border   rounded-lg px-4 py-3 text-[13px] outline-none transition-all resize-none leading-relaxed"
             />
             <div className="flex items-center justify-between mt-3">
-              <span className="text-[11px] ">{summary.length} karakter</span>
               <button
                 id="evaluate-btn"
                 onClick={handleEvaluate}
                 disabled={!canEvaluate}
-                className="flex items-center gap-2  disabled:opacity-30 disabled:cursor-not-allowed text-white text-[13px] font-medium px-5 py-2 rounded-lg transition-colors"
+                className="flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed  text-[13px] font-medium px-5 py-2 rounded-lg transition-colors"
               >
                 {evalLoading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -593,13 +562,13 @@ export default function ModelTestPage() {
 
       {/* Eval loading */}
       {evalLoading && (
-        <div className="border  rounded-xl p-6 flex items-center gap-4">
+        <div className="border rounded-xl  p-6 flex items-center gap-4">
           <Loader2 className="w-5 h-5  animate-spin shrink-0" />
           <div>
             <p className="text-[13px]  font-medium">
               Judge sedang menganalisis kode…
             </p>
-            <p className="text-[11px]   mt-0.5">
+            <p className="text-[11px] mt-0.5">
               openai/gpt-oss-120b membaca diff dan mengevaluasi ringkasan
             </p>
           </div>
@@ -608,20 +577,19 @@ export default function ModelTestPage() {
 
       {/* ── Panel 4: Results ────────────────────────────────────────────────── */}
       {evalResult && !evalLoading && (
-        <div ref={resultRef} className="border  rounded-xl  overflow-hidden">
-          {/* Result header */}
+        <div ref={resultRef} className="border rounded-xl  overflow-hidden">
           <div className="px-5 py-3 border-b  flex items-center gap-2">
             <CheckCheck className="w-3.5 h-3.5 text-[#22c55e]" />
-            <span className="text-[12px] font-semibold  uppercase tracking-wider">
+            <span className="text-[12px] font-semibold uppercase tracking-wider">
               Hasil Evaluasi
             </span>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-[10px] font-mono ">{evalResult.model}</span>
-            </div>
+            <span className="ml-auto text-[10px] font-mono text-[#1f2937]">
+              {evalResult.model}
+            </span>
           </div>
 
-          {/* Overall */}
-          <div className="px-5 pt-5 pb-4 border-b flex items-center justify-between">
+          {/* Overall score */}
+          <div className="px-5 pt-5 pb-4 border-b  flex items-center justify-between">
             <div>
               <p className="text-[11px]  uppercase tracking-wider mb-1">
                 Overall
@@ -633,7 +601,7 @@ export default function ModelTestPage() {
                 >
                   {evalResult.overall}
                 </span>
-                <span className="text-[16px] ">/10</span>
+                <span className="text-[16px]">/5</span>
               </div>
             </div>
             <div className="text-right space-y-1">
@@ -648,14 +616,14 @@ export default function ModelTestPage() {
                     className="text-[12px] font-semibold tabular-nums"
                     style={{ color: grade(s).color }}
                   >
-                    {s}/10
+                    {s}/5
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Score rows */}
+          {/* Score breakdown */}
           <div className="px-5">
             <ScoreRow label="Relevansi" aspect={evalResult.relevance} />
             <ScoreRow label="Kebenaran" aspect={evalResult.accuracy} />
@@ -664,7 +632,7 @@ export default function ModelTestPage() {
 
           {/* Feedback */}
           <div className="px-5 pb-5">
-            <div className="rounded-lg  border  p-4">
+            <div className="rounded-lg p-4">
               <p className="text-[11px]  uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <CircleAlert className="w-3 h-3" /> Feedback Judge
               </p>
@@ -673,17 +641,6 @@ export default function ModelTestPage() {
               </p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!fetchResult && !fetchLoading && !fetchError && (
-        <div className="border border-dashed  rounded-xl p-12 text-center">
-          <GitCommit className="w-7 h-7  mx-auto mb-3" />
-          <p className="text-[13px] ">
-            Pilih project, developer, dan tanggal — lalu klik{" "}
-            <span className="text-[#3b82f6]">Ambil Commit & Diff</span>
-          </p>
         </div>
       )}
     </div>

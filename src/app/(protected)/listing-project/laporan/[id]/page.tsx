@@ -35,10 +35,10 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
+  RotateCcw,
   User as UserIcon,
-  Download, // Added
-  FileSpreadsheet, // Added
-  FileText, // Added
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import React, { use, useCallback, useEffect, useState } from "react";
 import * as XLSX from "xlsx";
@@ -108,8 +108,9 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
   );
   const [selectedDeveloperId, setSelectedDeveloperId] = useState<string>("ALL");
 
-  // Loading state for single day generation
+  // Loading state for single day generation / regeneration
   const [generatingDate, setGeneratingDate] = useState<string | null>(null);
+  const [regeneratingDate, setRegeneratingDate] = useState<string | null>(null);
 
   // Batch Generation State
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
@@ -237,6 +238,45 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
       alert(error.message);
     } finally {
       setGeneratingDate(null);
+    }
+  };
+
+  // -- 6. ACTION: REGENERATE REPORT (overwrite existing) --
+  const handleRegenerate = async (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateStr = `${year}-${month}-${day}`;
+
+    if (
+      !confirm(
+        `Regenerate akan mengganti laporan yang sudah ada untuk tanggal ${dateStr}. Model AI akan menganalisis ulang diff kode dari GitHub. Lanjutkan?`
+      )
+    )
+      return;
+
+    try {
+      setRegeneratingDate(dateStr);
+
+      const payload: any = { date: dateStr, regenerate: true };
+      if (selectedDeveloperId !== "ALL") {
+        payload.developerId = selectedDeveloperId;
+      }
+
+      const res = await fetch(`/api/report/generate/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Gagal regenerate laporan");
+
+      fetchReports();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setRegeneratingDate(null);
     }
   };
 
@@ -723,37 +763,59 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
                   </TableCell>
 
                   <TableCell className="text-right align-top">
-                    {/* ACTION BUTTONS */}
-                    {/* If Admin + ALL, show hint if no reports or mixed? */}
-                    {/* If Admin selects specific user -> works as before (1 report max usually) */}
-
                     {!isFuture && (
                       <div className="flex flex-col items-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-                          onClick={() => handleGenerate(day)}
-                          disabled={
-                            isGeneratingThis ||
-                            (isAdmin && selectedDeveloperId === "ALL")
-                          }
-                        >
-                          {isGeneratingThis ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          )}
-                          Generate
-                        </Button>
+                        {/* Generate — only if no report yet */}
+                        {!hasReports && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={() => handleGenerate(day)}
+                            disabled={
+                              isGeneratingThis ||
+                              regeneratingDate === currentDateStr ||
+                              (isAdmin && selectedDeveloperId === "ALL")
+                            }
+                          >
+                            {isGeneratingThis ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            )}
+                            Generate
+                          </Button>
+                        )}
 
-                        {isAdmin &&
-                          selectedDeveloperId === "ALL" &&
-                          !hasReports && (
-                            <span className="text-[10px] text-red-400 block">
-                              Pilih Developer
-                            </span>
-                          )}
+                        {/* Regenerate — only if report exists */}
+                        {hasReports && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 text-orange-600 border-orange-200 hover:bg-orange-50"
+                            onClick={() => handleRegenerate(day)}
+                            disabled={
+                              regeneratingDate === currentDateStr ||
+                              isGeneratingThis ||
+                              (isAdmin && selectedDeveloperId === "ALL")
+                            }
+                          >
+                            {regeneratingDate === currentDateStr ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            )}
+                            {regeneratingDate === currentDateStr
+                              ? "Memperbarui…"
+                              : "Regenerate"}
+                          </Button>
+                        )}
+
+                        {isAdmin && selectedDeveloperId === "ALL" && (
+                          <span className="text-[10px] text-red-400 block">
+                            Pilih Developer
+                          </span>
+                        )}
                       </div>
                     )}
                   </TableCell>
