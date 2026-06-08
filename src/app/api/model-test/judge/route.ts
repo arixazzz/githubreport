@@ -36,15 +36,15 @@ Evaluasi summary berdasarkan 3 aspek berikut dengan mempertimbangkan isi KODE ya
 2. **Kebenaran (Accuracy)** — Apakah penjelasan teknis dalam summary sesuai dengan apa yang sebenarnya diubah di kode? Apakah tidak ada informasi yang keliru atau menyesatkan?
 3. **Kelengkapan (Completeness)** — Apakah summary mencakup semua perubahan signifikan yang ada di diff? Apakah ada perubahan penting yang terlewat?
 
-Berikan skor 1-10 untuk setiap aspek (1 = sangat buruk, 10 = sempurna) beserta alasan singkat dan spesifik dalam Bahasa Indonesia.
+Berikan skor 1-5 untuk setiap aspek (1 = sangat buruk, 5 = sempurna) beserta alasan singkat dan spesifik dalam Bahasa Indonesia.
 
-Jawab HANYA dalam format JSON berikut, tanpa teks tambahan apapun:
+Jawab HANYA dalam format JSON dengan struktur seperti contoh berikut, tanpa teks tambahan apapun:
 {
-  "relevance": { "score": <number 1-10>, "reason": "<alasan singkat dan spesifik>" },
-  "accuracy": { "score": <number 1-10>, "reason": "<alasan singkat dan spesifik>" },
-  "completeness": { "score": <number 1-10>, "reason": "<alasan singkat dan spesifik>" },
-  "overall": <rata-rata 1 desimal>,
-  "feedback": "<satu paragraf feedback keseluruhan berdasarkan analisis kode>"
+  "relevance": { "score": 5, "reason": "Alasan singkat dan spesifik untuk relevansi..." },
+  "accuracy": { "score": 5, "reason": "Alasan singkat dan spesifik untuk kebenaran..." },
+  "completeness": { "score": 5, "reason": "Alasan singkat dan spesifik untuk kelengkapan..." },
+  "overall": 5.0,
+  "feedback": "Satu paragraf feedback keseluruhan berdasarkan analisis kode"
 }`;
 
 export async function POST(req: NextRequest) {
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
             { role: "user", content: userContent },
           ],
           temperature: 0.2,
-          max_tokens: 1024,
+          max_tokens: 4096,
           response_format: { type: "json_object" },
         }),
       }
