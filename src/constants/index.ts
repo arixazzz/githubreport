@@ -126,7 +126,7 @@ export const getNavData = (userRole: string): navDateType => {
       icon: Users,
     },
     {
-      title: "Log Aktivitas",
+      title: "Log Aktivitas Pengguna",
       url: "/log-aktivitas",
       icon: Notebook,
     },
