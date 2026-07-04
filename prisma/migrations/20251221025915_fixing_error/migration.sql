@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Project" ALTER COLUMN "detail" DROP NOT NULL,
+ALTER COLUMN "stack" DROP NOT NULL;

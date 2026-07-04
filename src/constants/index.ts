@@ -131,7 +131,7 @@ export const getNavData = (userRole: string): navDateType => {
       icon: Notebook,
     },
     {
-      title: "Test Model",
+      title: "Model Test",
       url: "/model-test",
       icon: FlaskConical,
     },
