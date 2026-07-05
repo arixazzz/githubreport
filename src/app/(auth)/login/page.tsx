@@ -173,7 +173,7 @@ export default function LoginPage() {
           <div className="text-center">
             <h1 className="text-2xl font-semibold">Login</h1>
             <p className="text-sm text-muted-foreground">
-              Login ke GitHub Report
+              Login ke GitHub Report Dini
             </p>
           </div>
 
